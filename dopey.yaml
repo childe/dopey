@@ -8,6 +8,7 @@ indices:
     delete: 11
     optimize: 2
     reallocate: 2
+    optimize_nowait: false
   pprobe-:
     delete: 11
     optimize: 2

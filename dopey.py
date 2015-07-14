@@ -21,9 +21,10 @@ def initlog(level=None):
     if level is None:
         level = logging.DEBUG if __debug__ else logging.INFO
 
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s %(name)s - %(message)s")
+    formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s %(name)s - %(message)s")
     handler = logging.handlers.RotatingFileHandler(
-              "dopey.log", maxBytes=50000000, backupCount=2)
+        "dopey.log", maxBytes=50000000, backupCount=2)
     handler.setFormatter(formatter)
 
     root_logger = logging.getLogger('')
@@ -38,6 +39,7 @@ def filter_indices(all_indices, indices_config):
         "close": set(),
         "delete": set(),
         "optimize": set(),
+        "optimize_nowait": set(),
         "reallocate": set()
     }
 
@@ -70,12 +72,18 @@ def filter_indices(all_indices, indices_config):
             if not (re.match(r'%s\d{4}\.\d{2}\.\d{2}' % index_prefix, indexname)
                     or re.match(r'%s\d{4}\.\d{2}' % index_prefix, indexname)):
                 continue
-            for action, d in config.items():
+            optimize_nowait = config.get("optimize_nowait", True)
+            for action, v in config.items():
+                if action == "optimize_nowait":
+                    continue
                 if action == "optimize":
-                    if datetime.timedelta(d) == today-date:
-                        indices["optimize"].add(indexname)
+                    if datetime.timedelta(v) == today-date:
+                        if optimize_nowait is False:
+                            indices["optimize"].add(indexname)
+                        else:
+                            indices["optimize_nowait"].add(indexname)
                 else:
-                    if datetime.timedelta(d) <= today-date:
+                    if datetime.timedelta(v) <= today-date:
                         indices[action].add(indexname)
             break
         else:
@@ -164,6 +172,8 @@ def main():
         esclient,
         list(action_indices['reallocate']),
         rule="tag=cores8")
+
+    optimize_indices(esclient, action_indices['optimize_nowait'])
 
     while True:
         relo_cnt = get_relo_index_cnt(esclient)
