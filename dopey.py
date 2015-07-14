@@ -109,6 +109,7 @@ def filter_indices(all_indices, indices_config):
         else:
             not_involved.add(indexname)
 
+    indices["reallocate"].difference_update(indices["delete"])
     return indices, not_involved
 
 
