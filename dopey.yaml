@@ -1,0 +1,9 @@
+esclient:
+    - host: 127.0.0.1
+      #port: 9200
+      #url_prefix: 'es'
+      #use_ssl: True
+indices:
+  iislog-all-:
+    delete: 10
+    optimize: 3
