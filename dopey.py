@@ -21,7 +21,7 @@ def initlog(level=None):
     if level is None:
         level = logging.DEBUG if __debug__ else logging.INFO
 
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s %(name)s - %(message)s")
     handler = logging.handlers.RotatingFileHandler(
               "dopey.log", maxBytes=50000000, backupCount=2)
     handler.setFormatter(formatter)
