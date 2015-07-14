@@ -4,11 +4,6 @@ esclient:
       #url_prefix: 'es'
       #use_ssl: True
 indices:
-  iislog-:
-    delete: 10
-    reallocate: 2
-    optimize: 1
-  vpn-:
-    delete: 10
-    reallocate: 2
-    optimize: 1
+  cc-:
+    delete: 11
+    optimize: 2
