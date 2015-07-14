@@ -1,10 +1,14 @@
 esclient:
-    - host: 172.16.4.134
+    - host: 127.0.0.1
       #port: 9200
       #url_prefix: 'es'
       #use_ssl: True
 indices:
-  iislog-all-:
-    #delete: 3
-    #optimize: 2
+  iislog-:
+    delete: 10
     reallocate: 2
+    optimize: 1
+  vpn-:
+    delete: 10
+    reallocate: 2
+    optimize: 1
