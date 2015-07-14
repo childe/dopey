@@ -60,13 +60,6 @@ def initlog(level=None):
     logging.config.dictConfig(config)
 
 
-def get_all_indices(esclient):
-
-    catClient = elasticsearch.client.CatClient(esclient)
-    all_indices = catClient.indices(h="i")
-    return [e.strip() for e in all_indices.split() if e.strip()]
-
-
 def filter_indices(all_indices, indices_config):
     """return action indices, and not_involved indices """
 
@@ -134,7 +127,6 @@ def main():
     else:
         esclient = elasticsearch.Elasticsearch()
 
-    #all_indices = get_all_indices(esclient)
     all_indices = curator.get_indices(esclient)
     logging.debug(all_indices)
     return
