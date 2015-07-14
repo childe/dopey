@@ -7,6 +7,7 @@ indices:
   iislog-all-:
     delete: 11
     optimize: 2
+    reallocate: 2
   pprobe-:
     delete: 11
     optimize: 2
