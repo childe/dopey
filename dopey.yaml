@@ -1,5 +1,5 @@
 esclient:
-    - host: 127.0.0.1
+    - host: 172.16.4.134
       #port: 9200
       #url_prefix: 'es'
       #use_ssl: True

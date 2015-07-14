@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import requests
-import json
 import yaml
 import re
 import datetime
@@ -62,7 +60,7 @@ def initlog(level=None):
     logging.config.dictConfig(config)
 
 
-def get_indices(esclient, indices_config):
+def get_all_indices(esclient):
     """return index list
     {
     "delete":[],
@@ -78,9 +76,9 @@ def get_indices(esclient, indices_config):
         "reroute": []
     }
 
-    all_indices = esclient.indices()
-    logging.debug(all_indices)
-    return
+    catClient = elasticsearch.client.CatClient(esclient)
+    all_indices = catClient.indices(h="i")
+    return all_indices
 
     #for line in r.text.split('\n'):
         #if line.strip() == '':
@@ -127,7 +125,8 @@ def main():
     else:
         esclient = elasticsearch.Elasticsearch()
 
-    get_indices(esclient, config['indices'])
+    all_indices = get_all_indices(esclient)
+    logging.debug(all_indices)
 
 if __name__ == '__main__':
     main()
