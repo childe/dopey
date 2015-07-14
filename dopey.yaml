@@ -4,6 +4,87 @@ esclient:
       #url_prefix: 'es'
       #use_ssl: True
 indices:
+  iislog-all-:
+    delete: 11
+    optimize: 2
+  pprobe-:
+    delete: 11
+    optimize: 2
+  ops-linuxlog-:
+    delete: 11
+    optimize: 2
   cc-:
     delete: 11
+    optimize: 2
+  mobilerequest2-:
+    delete: 11
+    optimize: 2
+  mobilerestful-:
+    delete: 11
+    optimize: 2
+  ops-lb-:
+    delete: 11
+    optimize: 2
+  mobile-action-:
+    delete: 11
+    optimize: 2
+  exchangerpc-:
+    delete: 11
+    optimize: 2
+  squid-outband-:
+    delete: 11
+    optimize: 2
+  mobileclient-:
+    delete: 11
+    optimize: 2
+  mobile-:
+    delete: 11
+    optimize: 2
+  esvisit-:
+    delete: 30
+    optimize: 2
+  tmglog-:
+    delete: 11
+    optimize: 2
+  serverlog-:
+    delete: 11
+    optimize: 2
+  mobile-paymentinfosoalog-:
+    delete: 11
+    optimize: 2
+  mobile-hwsvcvisitlog-:
+    delete: 11
+    optimize: 2
+  mobile-paymentnofity-:
+    delete: 30
+    optimize: 2
+  paymentrtpnotifymonitor-:
+    delete: 30
+    optimize: 2
+  ops-linux-web-nginx-:
+    delete: 30
+    optimize: 2
+  ops-linux-web-apache-:
+    delete: 30
+    optimize: 2
+  ccdsk-:
+    delete: 30
+    optimize: 2
+  ops-linuxlog-fdfs-:
+    delete: 30
+    optimize: 2
+  suricata-:
+    delete: 30
+    optimize: 2
+  ops-linuxlog-tingyun-:
+    delete: 30
+    optimize: 2
+  hermes-:
+    delete: 30
+    optimize: 2
+  ops-linuxlog-rtstorm-:
+    delete: 30
+    optimize: 2
+  ops-linuxlog-kafka--:
+    delete: 30
     optimize: 2
