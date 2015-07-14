@@ -175,4 +175,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-    print >> open('a', 'a'), '\n'.join(records)
+    #print >> open('a', 'a'), '\n'.join(records)
