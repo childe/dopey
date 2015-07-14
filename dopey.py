@@ -61,6 +61,13 @@ def initlog(level=None):
 
 
 def get_all_indices(esclient):
+
+    catClient = elasticsearch.client.CatClient(esclient)
+    all_indices = catClient.indices(h="i")
+    return [e.strip() for e in all_indices.split() if e.strip()]
+
+
+def filter_indices(all_indices, indices_config):
     """return index list
     {
     "delete":[],
@@ -75,39 +82,24 @@ def get_all_indices(esclient):
         "optimize": [],
         "reroute": []
     }
+    for indexname in all_indices:
+        for index_prefix,config in indices_config.items():
+            r = re.findall(r'-(\d{4}\.\d{2}\.\d{2})$', indexname)
+            if r:
+                date = datetime.datetime.strptime(r[0], '%Y.%m.%d')
+            else:
+                r = re.findall(r'-(\d{4}\.\d{2})$', indexname)
+                if r:
+                    date = datetime.datetime.strptime(r[0], '%Y.%m')
+                else:
+                    logging.info('%s dont endswith date' % indexname)
+                    continue
 
-    catClient = elasticsearch.client.CatClient(esclient)
-    all_indices = catClient.indices(h="i")
-    return all_indices
 
-    #for line in r.text.split('\n'):
-        #if line.strip() == '':
-            #continue
-
-        #logger.debug(line)
-
-        #parts = line.split()
-
-        #indexname = parts[1]
-        #doc_cnt = int(parts[4])
-
-        #if doc_cnt == 0:
-            #logger.info('%s count is 0' % indexname)
-            #continue
-            #requests.delete('http://10.8.84.90:443/%s' % indexname)
-
-        #r = re.findall(r'-(\d{4}\.\d{2}\.\d{2})$', indexname)
-        #if not r:
-            #logger.info('%s dont endswith date' % indexname)
-            #continue
-
-        #date = datetime.datetime.strptime(r[0], '%Y.%m.%d')
-        #if date > datetime.datetime.now():
-            #logger.info(indexname)
-
-    #for index_prefix, v in config.iteritems():
-        #for action, d in v.iteritems():
-            #pass
+    for index_prefix, v in config.iteritems():
+         for action, d in v.iteritems():
+             pass
+    return indices
 
 
 def main():
