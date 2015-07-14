@@ -88,3 +88,18 @@ indices:
   ops-linuxlog-kafka--:
     delete: 30
     optimize: 2
+  maillog-:
+    delete: 90
+  ad-:
+    delete: 560
+    close: 50
+  eventbus-:
+    delete: 90
+  iis-errorlog-:
+    delete: 90
+  ops-vpnauth-:
+    delete: 90
+  syslogapplog-:
+    delete: 120
+  pci-netsecure-:
+    delete: 370
