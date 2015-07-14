@@ -103,3 +103,11 @@ indices:
     delete: 120
   pci-netsecure-:
     delete: 370
+    close: 50
+  eventlog-:
+    delete: 370
+    close: 50
+  netranger-web-:
+    delete: 90
+  itdbcheck-:
+    delete: 90
