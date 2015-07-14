@@ -105,8 +105,9 @@ def delete_indices(esclient, indices):
     if not indices:
         return
     logging.debug("try to delete %s" % ','.join(indices))
-    if curator.delete_indices(esclient, indices):
-        logging.info('indices deleted: %s' % ','.join(indices))
+    for index in indices:
+        if curator.delete_indices(esclient, [index]):
+            logging.info('%s deleted' % index)
 
 
 def optimize_index(esclient, index):
