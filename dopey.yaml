@@ -5,6 +5,6 @@ esclient:
       #use_ssl: True
 indices:
   iislog-all-:
-    delete: 1
-    optimize: 3
+    #delete: 3
+    #optimize: 2
     reallocate: 2

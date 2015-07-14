@@ -64,13 +64,13 @@ def filter_indices(all_indices, indices_config):
     """return action indices, and not_involved indices """
 
     indices = {
-        "close": [],
-        "delete": [],
-        "optimize": [],
-        "reallocate": []
+        "close": set(),
+        "delete": set(),
+        "optimize": set(),
+        "reallocate": set()
     }
 
-    not_involved = []
+    not_involved = set()
 
     today = datetime.date.today()
 
@@ -101,13 +101,13 @@ def filter_indices(all_indices, indices_config):
             for action, d in config.items():
                 if action == "optimize":
                     if datetime.timedelta(d) == today-date:
-                        indices["optimize"].append(indexname)
+                        indices["optimize"].add(indexname)
                 else:
                     if datetime.timedelta(d) <= today-date:
-                        indices[action].append(indexname)
+                        indices[action].add(indexname)
             break
         else:
-            not_involved.append(indexname)
+            not_involved.add(indexname)
 
     return indices, not_involved
 
@@ -129,7 +129,6 @@ def main():
 
     all_indices = curator.get_indices(esclient)
     logging.debug(all_indices)
-    return
 
     action_indices, not_involved = filter_indices(
         all_indices, config['indices'])
@@ -142,8 +141,14 @@ def main():
     if action_indices['delete']:
         curator.delete(esclient, action_indices['delete'])
 
-    for index in  action_indices['optimize']:
-        curator.optimize_index(esclient,index)
+    curator.api.allocation(
+        esclient,
+        action_indices['reallocate'],
+        rule="tag=cores8")
+
+
+    for index in action_indices['optimize']:
+        curator.optimize_index(esclient, index, 1)
 
 if __name__ == '__main__':
     main()
