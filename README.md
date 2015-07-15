@@ -10,4 +10,4 @@ urllib3==1.10
 wheel==0.24.0  
 
 # 使用
-dopey.py -c dopey.yaml -l /var/log/dopey.log
+dopey.py -c dopey.yaml -l /var/log/dopey.log --level debug
