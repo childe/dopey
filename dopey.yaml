@@ -4,121 +4,21 @@ esclient:
       #port: 9200
       #url_prefix: 'es'
       #use_ssl: True
+
 sumary:
     log: null
     prints: null
     mail:
-      mail_host: "appmail.sh.ctriptravel.com"
-      from_who: "jia.liu@ctrip.com"
-      to_list: ["jia.liu@ctrip.com","xgwu@ctrip.com"]
+      mail_host: "mail.corp.com"
+      from_who: "jia.liu@corp.com"
+      to_list: ["jia.liu@corp.com"]
 
 indices:
-  iislog-all-:
+  iis-:
     delete: 11
     optimize: 2
     reallocate: 2
     optimize_nowait: false
-  pprobe-:
+  nginx-:
     delete: 11
     optimize: 2
-  ops-linuxlog-:
-    delete: 11
-    optimize: 2
-  cc-:
-    delete: 11
-    optimize: 2
-  mobilerequest2-:
-    delete: 11
-    optimize: 2
-  mobilerestful-:
-    delete: 11
-    optimize: 2
-  ops-lb-:
-    delete: 11
-    optimize: 2
-  mobile-action-:
-    delete: 11
-    optimize: 2
-  exchangerpc-:
-    delete: 11
-    optimize: 2
-  squid-outband-:
-    delete: 11
-    optimize: 2
-  mobileclient-:
-    delete: 11
-    optimize: 2
-  mobile-:
-    delete: 11
-    optimize: 2
-  esvisit-:
-    delete: 30
-    optimize: 2
-  tmglog-:
-    delete: 11
-    optimize: 2
-  serverlog-:
-    delete: 11
-    optimize: 2
-  mobile-paymentinfosoalog-:
-    delete: 11
-    optimize: 2
-  mobile-hwsvcvisitlog-:
-    delete: 11
-    optimize: 2
-  mobile-paymentnofity-:
-    delete: 30
-    optimize: 2
-  paymentrtpnotifymonitor-:
-    delete: 30
-    optimize: 2
-  ops-linux-web-nginx-:
-    delete: 30
-    optimize: 2
-  ops-linux-web-apache-:
-    delete: 30
-    optimize: 2
-  ccdsk-:
-    delete: 30
-    optimize: 2
-  ops-linuxlog-fdfs-:
-    delete: 30
-    optimize: 2
-  suricata-:
-    delete: 30
-    optimize: 2
-  ops-linuxlog-tingyun-:
-    delete: 30
-    optimize: 2
-  hermes-:
-    delete: 30
-    optimize: 2
-  ops-linuxlog-rtstorm-:
-    delete: 30
-    optimize: 2
-  ops-linuxlog-kafka--:
-    delete: 30
-    optimize: 2
-  maillog-:
-    delete: 90
-  ad-:
-    delete: 560
-    close: 50
-  eventbus-:
-    delete: 90
-  iis-errorlog-:
-    delete: 90
-  ops-vpnauth-:
-    delete: 90
-  syslogapplog-:
-    delete: 120
-  pci-netsecure-:
-    delete: 370
-    close: 50
-  eventlog-:
-    delete: 370
-    close: 50
-  netranger-web-:
-    delete: 90
-  itdbcheck-:
-    delete: 90
