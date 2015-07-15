@@ -16,7 +16,7 @@ import curator
 records = []
 
 
-def initlog(level=None):
+def initlog(level=None, logfile="/var/log/dopey/dopey.log"):
 
     if level is None:
         level = logging.DEBUG if __debug__ else logging.INFO
@@ -24,7 +24,7 @@ def initlog(level=None):
     formatter = logging.Formatter(
         "%(asctime)s - %(levelname)s %(name)s - %(message)s")
     handler = logging.handlers.RotatingFileHandler(
-        "dopey.log", maxBytes=50000000, backupCount=2)
+        logfile, maxBytes=50000000, backupCount=2)
     handler.setFormatter(formatter)
 
     root_logger = logging.getLogger('')
@@ -137,13 +137,19 @@ def optimize_indices(esclient, indices):
 
 
 def main():
-    initlog()
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", default="dopey.yaml", help="yaml config")
+    parser.add_argument(
+        "-l",
+        default="/var/log/dopey/dopey.log",
+        help="log file")
     args = parser.parse_args()
 
     config = yaml.load(open(args.c))
+
+    initlog(logfile=config["log"] if "log" in config else args.l)
+
+    return
 
     eshosts = config.get("esclient")
     if eshosts is not None:
