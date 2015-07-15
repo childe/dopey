@@ -7,6 +7,7 @@ import json
 import time
 import argparse
 from threading import Thread
+from multiprocessing import Pool
 import logging
 import logging.handlers
 import logging.config
@@ -175,9 +176,15 @@ def optimize_index(esclient, index):
 def optimize_indices(esclient, indices):
     if not indices:
         return
+
     logging.debug("try to optimize %s" % ','.join(indices))
+
+    pool = Pool(processes=len(indices))
     for index in indices:
-        Thread(target=optimize_index, args=(esclient, index,)).start()
+        pool.apply_async(optimize_index, args=(esclient, index,))
+
+    pool.close()
+    return pool
 
 
 def main():
@@ -231,7 +238,9 @@ def main():
         rule="tag=cores8")
 
     dopey_summary.add(u"开始optimize不需要等待的索引")
-    optimize_indices(esclient, action_indices['optimize_nowait'])
+    optimize_nowait_pool = optimize_indices(
+        esclient,
+        action_indices['optimize_nowait'])
 
     while True:
         relo_cnt = get_relo_index_cnt(esclient)
@@ -242,9 +251,14 @@ def main():
     dopey_summary.add(u"reallocate索引完成")
 
     dopey_summary.add(u"开始optimize需要等待的索引")
-    optimize_indices(esclient, action_indices['optimize'])
+    optimize_pool = optimize_indices(esclient, action_indices['optimize'])
 
-    sumary_config = config.get("sumary")
+    if optimize_nowait_pool:
+        optimize_nowait_pool.join()
+    if optimize_pool:
+        optimize_pool.join()
+
+    sumary_config = config.get("sumary",{})
     for action, kargs in sumary_config.items():
         if kargs:
             getattr(dopey_summary, action)(**kargs)
