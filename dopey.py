@@ -56,7 +56,6 @@ class Sumary(object):
 
 dopey_summary = Sumary()
 
-
 def initlog(level=None, logfile="/var/log/dopey/dopey.log"):
 
     if level is None:
@@ -72,6 +71,7 @@ def initlog(level=None, logfile="/var/log/dopey/dopey.log"):
     root_logger.setLevel(logging.DEBUG)
     root_logger.addHandler(handler)
 
+logger = logging.getLogger("dopey")
 
 def filter_indices(all_indices, indices_config):
     """return action indices, and not_involved indices """
@@ -90,7 +90,7 @@ def filter_indices(all_indices, indices_config):
 
     #indices_timedelta = {}
     for indexname in all_indices:
-        logging.debug(indexname)
+        logger.debug(indexname)
         r = re.findall(r'-(\d{4}\.\d{2}\.\d{2})$', indexname)
         if r:
             date = datetime.datetime.strptime(r[0], '%Y.%m.%d')
@@ -99,13 +99,13 @@ def filter_indices(all_indices, indices_config):
             if r:
                 date = datetime.datetime.strptime(r[0], '%Y.%m')
             else:
-                logging.warn('%s dont endswith date' % indexname)
+                logger.warn('%s dont endswith date' % indexname)
                 not_involved.add(indexname)
                 continue
         date = date.date()
 
-        logging.debug(date)
-        logging.debug(today-date)
+        logger.debug(date)
+        logger.debug(today-date)
         #indices_timedelta[indexname] = today - date
 
         for index_prefix, config in indices_config.items():
@@ -145,18 +145,18 @@ def get_relo_index_cnt(esclient):
 def close_indices(esclient, indices):
     if not indices:
         return
-    logging.debug("try to close %s" % ','.join(indices))
+    logger.debug("try to close %s" % ','.join(indices))
     if curator.close_indices(esclient, indices):
-        logging.info('indices closed: %s' % ','.join(indices))
+        logger.info('indices closed: %s' % ','.join(indices))
 
 
 def delete_indices(esclient, indices):
     if not indices:
         return
-    logging.debug("try to delete %s" % ','.join(indices))
+    logger.debug("try to delete %s" % ','.join(indices))
     for index in indices:
         if curator.delete_indices(esclient, [index]):
-            logging.info('%s deleted' % index)
+            logger.info('%s deleted' % index)
 
 
 def optimize_index(esclient, index):
@@ -166,7 +166,7 @@ def optimize_index(esclient, index):
             max_num_segments=1,
             request_timeout=10 *
             3600):
-        logging.info('%s optimized' % index)
+        logger.info('%s optimized' % index)
         dopey_summary.add(u"%s optimize 完成" % index)
     else:
         dopey_summary.add(u"%s optimize 未完成退出" % index)
@@ -175,7 +175,7 @@ def optimize_index(esclient, index):
 def optimize_indices(esclient, indices):
     if not indices:
         return []
-    logging.debug("try to optimize %s" % ','.join(indices))
+    logger.debug("try to optimize %s" % ','.join(indices))
 
     threads = []
     for index in indices:
@@ -206,17 +206,17 @@ def main():
         esclient = elasticsearch.Elasticsearch()
 
     all_indices = curator.get_indices(esclient)
-    logging.debug(all_indices)
+    logger.debug(all_indices)
 
     action_indices, not_involved = filter_indices(
         all_indices, config['indices'])
-    logging.info(action_indices)
+    logger.info(action_indices)
     dopey_summary.add(
         u"今日维护工作: \n%s" %
         json.dumps(
             action_indices,
             indent=2))
-    logging.info(not_involved)
+    logger.info(not_involved)
     dopey_summary.add(
         u"未配置的索引: \n%s" %
         json.dumps(
@@ -237,12 +237,13 @@ def main():
         rule="tag=cores8")
 
     dopey_summary.add(u"开始optimize不需要等待的索引")
-    optimize_nowait_threads = optimize_indices(esclient, action_indices['optimize_nowait'])
-
+    optimize_nowait_threads = optimize_indices(
+        esclient,
+        action_indices['optimize_nowait'])
 
     while True:
         relo_cnt = get_relo_index_cnt(esclient)
-        logging.info("relocation indices count: %s" % relo_cnt)
+        logger.info("relocation indices count: %s" % relo_cnt)
         if relo_cnt == 0:
             break
         time.sleep(10*60)
@@ -251,12 +252,10 @@ def main():
     dopey_summary.add(u"开始optimize需要等待的索引")
     optimize_threads = optimize_indices(esclient, action_indices['optimize'])
 
-
     for t in optimize_nowait_threads:
         t.join()
     for t in optimize_threads:
         t.join()
-
 
     sumary_config = config.get("sumary")
     for action, kargs in sumary_config.items():
