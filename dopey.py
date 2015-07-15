@@ -10,10 +10,51 @@ from threading import Thread
 import logging
 import logging.handlers
 import logging.config
+import smtplib
+from email.mime.text import MIMEText
 import elasticsearch
 import curator
 
-records = []
+
+class Sumary(object):
+
+    def __init__(self):
+        super(Sumary, self).__init__()
+        self.records = []
+
+    def add(self, record):
+        self.records.append(
+            '[%s] %s' %
+            (datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S'), record))
+
+    @property
+    def sumary(self):
+        return '\n'.join(self.records)
+
+    def prints(self):
+        print self.sumary
+
+    def log(self):
+        logging.getLogger("DopeySumary").info(self.sumary)
+
+    def mail(self, mail_host, from_who, to_list, sub="dopey sumary"):
+        content=self.sumary
+        content = content.encode('utf-8')
+
+        msg = MIMEText(content)
+        msg['Subject'] = sub
+        msg['From'] = from_who
+        msg['To'] = ";".join(to_list)
+        try:
+            s = smtplib.SMTP()
+            s.connect(mail_host)
+            s.sendmail(from_who, to_list, msg.as_string())
+            s.close()
+        except Exception as e:
+            logging.error(str(e))
+
+
+dopey_summary = Sumary()
 
 
 def initlog(level=None, logfile="/var/log/dopey/dopey.log"):
@@ -149,8 +190,6 @@ def main():
 
     initlog(logfile=config["log"] if "log" in config else args.l)
 
-    return
-
     eshosts = config.get("esclient")
     if eshosts is not None:
         esclient = elasticsearch.Elasticsearch(eshosts)
@@ -163,13 +202,22 @@ def main():
     action_indices, not_involved = filter_indices(
         all_indices, config['indices'])
     logging.info(action_indices)
-    records.append('all actions: \n%s' % json.dumps(action_indices, indent=2))
+    dopey_summary.add('all actions: \n%s' % json.dumps(action_indices, indent=2))
     logging.info(not_involved)
-    records.append(
+    dopey_summary.add(
         'indices not configured: \n%s' %
         json.dumps(
             not_involved,
             indent=2))
+
+    sumary_config = config.get("sumary")
+    for action, kargs in sumary_config.items():
+        if kargs:
+            getattr(dopey_summary,action)(**kargs)
+        else:
+            getattr(dopey_summary,action)()
+
+    return
 
     close_indices(esclient, action_indices['close'])
     delete_indices(esclient, action_indices['delete'])

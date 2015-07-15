@@ -1,8 +1,17 @@
+log: dopey.log
 esclient:
     - host: 127.0.0.1
       #port: 9200
       #url_prefix: 'es'
       #use_ssl: True
+sumary:
+    log: null
+    prints: null
+    mail:
+      mail_host: "appmail.sh.ctriptravel.com"
+      from_who: "jia.liu@ctrip.com"
+      to_list: ["jia.liu@ctrip.com","xgwu@ctrip.com"]
+
 indices:
   iislog-all-:
     delete: 11
