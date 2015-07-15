@@ -174,10 +174,16 @@ def optimize_index(esclient, index):
 
 def optimize_indices(esclient, indices):
     if not indices:
-        return
+        return []
     logging.debug("try to optimize %s" % ','.join(indices))
+
+    threads = []
     for index in indices:
-        Thread(target=optimize_index, args=(esclient, index,)).start()
+        t = Thread(target=optimize_index, args=(esclient, index,))
+        t.start()
+        threads.append(t)
+
+    return threads
 
 
 def main():
@@ -231,7 +237,8 @@ def main():
         rule="tag=cores8")
 
     dopey_summary.add(u"开始optimize不需要等待的索引")
-    optimize_indices(esclient, action_indices['optimize_nowait'])
+    optimize_nowait_threads = optimize_indices(esclient, action_indices['optimize_nowait'])
+
 
     while True:
         relo_cnt = get_relo_index_cnt(esclient)
@@ -242,7 +249,14 @@ def main():
     dopey_summary.add(u"reallocate索引完成")
 
     dopey_summary.add(u"开始optimize需要等待的索引")
-    optimize_indices(esclient, action_indices['optimize'])
+    optimize_threads = optimize_indices(esclient, action_indices['optimize'])
+
+
+    for t in optimize_nowait_threads:
+        t.join()
+    for t in optimize_threads:
+        t.join()
+
 
     sumary_config = config.get("sumary")
     for action, kargs in sumary_config.items():
