@@ -38,7 +38,7 @@ class Sumary(object):
         logging.getLogger("DopeySumary").info(self.sumary)
 
     def mail(self, mail_host, from_who, to_list, sub="dopey sumary"):
-        content=self.sumary
+        content = self.sumary
         content = content.encode('utf-8')
 
         msg = MIMEText(content)
@@ -167,6 +167,9 @@ def optimize_index(esclient, index):
             request_timeout=10 *
             3600):
         logging.info('%s optimized' % index)
+        dopey_summary.add(u"%s optimize 完成" % index)
+    else:
+        dopey_summary.add(u"%s optimize 未完成退出" % index)
 
 
 def optimize_indices(esclient, indices):
@@ -202,31 +205,32 @@ def main():
     action_indices, not_involved = filter_indices(
         all_indices, config['indices'])
     logging.info(action_indices)
-    dopey_summary.add('all actions: \n%s' % json.dumps(action_indices, indent=2))
+    dopey_summary.add(
+        u"今日维护工作: \n%s" %
+        json.dumps(
+            action_indices,
+            indent=2))
     logging.info(not_involved)
     dopey_summary.add(
-        'indices not configured: \n%s' %
+        u"未配置的索引: \n%s" %
         json.dumps(
             not_involved,
             indent=2))
 
-    sumary_config = config.get("sumary")
-    for action, kargs in sumary_config.items():
-        if kargs:
-            getattr(dopey_summary,action)(**kargs)
-        else:
-            getattr(dopey_summary,action)()
-
-    return
-
+    dopey_summary.add(u"开始关闭索引")
     close_indices(esclient, action_indices['close'])
+    dopey_summary.add(u"索引已经关闭")
+    dopey_summary.add(u"开始删除索引")
     delete_indices(esclient, action_indices['delete'])
+    dopey_summary.add(u"索引已经删除")
 
+    dopey_summary.add(u"开始reallocate索引")
     curator.api.allocation(
         esclient,
         list(action_indices['reallocate']),
         rule="tag=cores8")
 
+    dopey_summary.add(u"开始optimize不需要等待的索引")
     optimize_indices(esclient, action_indices['optimize_nowait'])
 
     while True:
@@ -235,9 +239,18 @@ def main():
         if relo_cnt == 0:
             break
         time.sleep(10*60)
+    dopey_summary.add(u"reallocate索引完成")
 
+    dopey_summary.add(u"开始optimize需要等待的索引")
     optimize_indices(esclient, action_indices['optimize'])
+
+    sumary_config = config.get("sumary")
+    for action, kargs in sumary_config.items():
+        if kargs:
+            getattr(dopey_summary, action)(**kargs)
+        else:
+            getattr(dopey_summary, action)()
+
 
 if __name__ == '__main__':
     main()
-    #print >> open('a', 'a'), '\n'.join(records)
