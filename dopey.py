@@ -56,10 +56,13 @@ class Sumary(object):
 
 dopey_summary = Sumary()
 
+
 def initlog(level=None, logfile="/var/log/dopey/dopey.log"):
 
     if level is None:
         level = logging.DEBUG if __debug__ else logging.INFO
+    else:
+        level = getattr(logging, level.upper())
 
     formatter = logging.Formatter(
         "%(asctime)s - %(levelname)s %(name)s - %(message)s")
@@ -68,10 +71,11 @@ def initlog(level=None, logfile="/var/log/dopey/dopey.log"):
     handler.setFormatter(formatter)
 
     root_logger = logging.getLogger('')
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(level)
     root_logger.addHandler(handler)
 
 logger = logging.getLogger("dopey")
+
 
 def filter_indices(all_indices, indices_config):
     """return action indices, and not_involved indices """
@@ -193,11 +197,14 @@ def main():
         "-l",
         default="/var/log/dopey/dopey.log",
         help="log file")
+    parser.add_argument("--level", default="info")
     args = parser.parse_args()
 
     config = yaml.load(open(args.c))
 
-    initlog(logfile=config["log"] if "log" in config else args.l)
+    initlog(
+        level=args.level, logfile=config["log"]
+        if "log" in config else args.l)
 
     eshosts = config.get("esclient")
     if eshosts is not None:
