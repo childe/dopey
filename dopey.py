@@ -164,15 +164,19 @@ def delete_indices(esclient, indices):
 
 
 def optimize_index(esclient, index):
-    if curator.optimize_index(
-            esclient,
-            index,
-            max_num_segments=1,
-            request_timeout=10 *
-            3600):
-        logger.info('%s optimized' % index)
-        dopey_summary.add(u"%s optimize 完成" % index)
-    else:
+    try:
+        if curator.optimize_index(
+                esclient,
+                index,
+                max_num_segments=1,
+                request_timeout=18 *
+                3600):
+            logger.info('%s optimized' % index)
+            dopey_summary.add(u"%s optimize 完成" % index)
+        else:
+            raise
+    except:
+        logger.info(u"%s optimize 未完成退出" % index)
         dopey_summary.add(u"%s optimize 未完成退出" % index)
 
 
