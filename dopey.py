@@ -37,7 +37,7 @@ class Sumary(object):
     def log(self):
         logging.getLogger("DopeySumary").info(self.sumary)
 
-    def mail(self, mail_host, from_who, to_list, sub="dopey sumary"):
+    def mail(self, mail_host, from_who, to_list, sub="dopey summary"):
         content = self.sumary
         content = content.encode('utf-8')
 
