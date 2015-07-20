@@ -200,13 +200,20 @@ def optimize_indices(esclient, indices):
 
     return threads
 
+
 def close_replic(esclient, indices):
     esclient.put_settings(
-        index=','.join(indices),
-        body={
-            "index.number_of_replicas":0
-        }
+        index=",".join(indices),
+        body={"index.number_of_replicas": 0}
     )
+
+
+def recovery_replic(esclient, indices):
+    for index, replic in indices.items():
+        esclient.put_settings(
+            index=index,
+            body={"index.number_of_replicas": replic}
+        )
 
 def main():
     parser = argparse.ArgumentParser()
@@ -286,6 +293,10 @@ def main():
         t.join()
     for t in optimize_threads:
         t.join()
+
+
+    dopey_summary.add(u"开始恢复replic")
+    recovery_replic(esclient, close_replic_indices)
 
     sumary_config = config.get("sumary")
     for action, kargs in sumary_config.items():
