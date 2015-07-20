@@ -8,17 +8,19 @@ esclient:
 sumary:
     log: null
     prints: null
-    mail:
-      mail_host: "mail.corp.com"
-      from_who: "jia.liu@corp.com"
-      to_list: ["jia.liu@corp.com"]
+    #mail:
+    #  mail_host: "mail.corp.com"
+    #  from_who: "jia.liu@corp.com"
+    #  to_list: ["jia.liu@corp.com"]
 
 indices:
-  iis-:
+  iislog-:
     delete: 11
     optimize: 2
     reallocate: 2
-    optimize_nowait: false
-  nginx-:
+    settings:
+      optimize_nowait: false #default true
+      close_replic: true #set replic to 0 before allocation if also need optimize;default false
+  vpn-:
     delete: 11
     optimize: 2

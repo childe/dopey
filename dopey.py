@@ -80,6 +80,8 @@ logger = logging.getLogger("dopey")
 def filter_indices(esclient, all_indices, indices_config):
     """return action indices, and not_involved indices """
 
+    index_client = elasticsearch.client.IndicesClient(esclient)
+
     indices = {
         "close": set(),
         "delete": set(),
@@ -119,17 +121,21 @@ def filter_indices(esclient, all_indices, indices_config):
             if not (re.match(r'%s\d{4}\.\d{2}\.\d{2}' % index_prefix, indexname)
                     or re.match(r'%s\d{4}\.\d{2}' % index_prefix, indexname)):
                 continue
-            optimize_nowait = config.get("optimize_nowait", True)
 
-            if config.get("close_replic", False):
-                settings  =  esclient.get_settings(index=indexname)
-                close_replic_indices[indexname] = settings['index']['number_of_replicas']
+            settings = config.get("settings", {})
+
+            optimize_nowait = settings.get("optimize_nowait", True)
 
             for action, v in config.items():
-                if action == "optimize_nowait":
+                if action == "settings":
                     continue
                 if action == "optimize":
                     if datetime.timedelta(v) == today-date:
+                        if settings.get("close_replic", False):
+                            index_settings = index_client.get_settings(index=indexname)
+                            close_replic_indices[indexname] = index_settings[
+                                indexname]['settings']['index']['number_of_replicas']
+
                         if optimize_nowait is False:
                             indices["optimize"].add(indexname)
                         else:
@@ -202,18 +208,27 @@ def optimize_indices(esclient, indices):
 
 
 def close_replic(esclient, indices):
-    esclient.put_settings(
+    if not indices:
+        return
+    logger.debug("try to close replic, %s" % ','.join(indices))
+    index_client = elasticsearch.client.IndicesClient(esclient)
+    index_client.put_settings(
         index=",".join(indices),
         body={"index.number_of_replicas": 0}
     )
 
 
 def recovery_replic(esclient, indices):
+    if not indices:
+        return
+    logger.debug("try to recover replic, %s" % ','.join(indices.keys()))
+    index_client = elasticsearch.client.IndicesClient(esclient)
     for index, replic in indices.items():
-        esclient.put_settings(
+        index_client.put_settings(
             index=index,
             body={"index.number_of_replicas": replic}
         )
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -294,7 +309,7 @@ def main():
     for t in optimize_threads:
         t.join()
 
-
+    logger.info(u"开始恢复replic")
     dopey_summary.add(u"开始恢复replic")
     recovery_replic(esclient, close_replic_indices)
 
