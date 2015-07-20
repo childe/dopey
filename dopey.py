@@ -99,7 +99,7 @@ def filter_indices(esclient, all_indices, indices_config):
     #indices_timedelta = {}
     for indexname in all_indices:
         logger.debug(indexname)
-        r = re.findall(r'-(\d{4}\.\d{2}\.\d{2})$', indexname)
+        r = re.findall(r'(\d{4}\.\d{2}\.\d{2})$', indexname)
         if r:
             date = datetime.datetime.strptime(r[0], '%Y.%m.%d')
         else:
