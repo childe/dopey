@@ -77,7 +77,7 @@ def initlog(level=None, logfile="/var/log/dopey/dopey.log"):
 logger = logging.getLogger("dopey")
 
 
-def filter_indices(all_indices, indices_config):
+def filter_indices(esclient, all_indices, indices_config):
     """return action indices, and not_involved indices """
 
     indices = {
@@ -87,6 +87,8 @@ def filter_indices(all_indices, indices_config):
         "optimize_nowait": set(),
         "reallocate": set()
     }
+
+    close_replic_indices = dict()
 
     not_involved = set()
 
@@ -118,6 +120,11 @@ def filter_indices(all_indices, indices_config):
                     or re.match(r'%s\d{4}\.\d{2}' % index_prefix, indexname)):
                 continue
             optimize_nowait = config.get("optimize_nowait", True)
+
+            if config.get("close_replic", False):
+                settings  =  esclient.get_settings(index=indexname)
+                close_replic_indices[indexname] = settings['index']['number_of_replicas']
+
             for action, v in config.items():
                 if action == "optimize_nowait":
                     continue
@@ -138,7 +145,7 @@ def filter_indices(all_indices, indices_config):
     for k, v in indices.items():
         indices[k] = list(v)
     not_involved = list(not_involved)
-    return indices, not_involved
+    return indices, close_replic_indices, not_involved
 
 
 def get_relo_index_cnt(esclient):
@@ -193,6 +200,13 @@ def optimize_indices(esclient, indices):
 
     return threads
 
+def close_replic(esclient, indices):
+    esclient.put_settings(
+        index=','.join(indices),
+        body={
+            "index.number_of_replicas":0
+        }
+    )
 
 def main():
     parser = argparse.ArgumentParser()
@@ -219,8 +233,8 @@ def main():
     all_indices = curator.get_indices(esclient)
     logger.debug(all_indices)
 
-    action_indices, not_involved = filter_indices(
-        all_indices, config['indices'])
+    action_indices, close_replic_indices, not_involved = filter_indices(
+        esclient, all_indices, config['indices'])
     logger.info(action_indices)
     dopey_summary.add(
         u"今日维护工作: \n%s" %
@@ -234,9 +248,14 @@ def main():
             not_involved,
             indent=2))
 
+    dopey_summary.add(u"开始关闭replic")
+    close_replic(esclient, close_replic_indices.keys())
+    dopey_summary.add(u"replic已经关闭")
+
     dopey_summary.add(u"开始关闭索引")
     close_indices(esclient, action_indices['close'])
     dopey_summary.add(u"索引已经关闭")
+
     dopey_summary.add(u"开始删除索引")
     delete_indices(esclient, action_indices['delete'])
     dopey_summary.add(u"索引已经删除")
