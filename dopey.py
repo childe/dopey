@@ -257,12 +257,21 @@ def main():
 
     action_indices, close_replic_indices, not_involved = filter_indices(
         esclient, all_indices, config['indices'])
+
     logger.info(action_indices)
     dopey_summary.add(
         u"今日维护工作: \n%s" %
         json.dumps(
             action_indices,
             indent=2))
+
+    logger.info(close_replic_indices)
+    dopey_summary.add(
+        u"需要先关闭replic的索引: \n%s" %
+        json.dumps(
+            close_replic_indices,
+            indent=2))
+
     logger.info(not_involved)
     dopey_summary.add(
         u"未配置的索引: \n%s" %
@@ -312,6 +321,8 @@ def main():
     logger.info(u"开始恢复replic")
     dopey_summary.add(u"开始恢复replic")
     recovery_replic(esclient, close_replic_indices)
+    logger.info(u"已经恢复replic配置")
+    dopey_summary.add(u"开始恢复replic配置")
 
     sumary_config = config.get("sumary")
     for action, kargs in sumary_config.items():
