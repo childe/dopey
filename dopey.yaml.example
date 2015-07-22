@@ -21,6 +21,7 @@ indices:
     settings:
       optimize_nowait: false #default true
       close_replic: true #set replic to 0 before allocation if also need optimize;default false
+      max_num_segments: 5 #default 1
   vpn-:
     delete: 11
     optimize: 2

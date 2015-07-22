@@ -83,11 +83,11 @@ def filter_indices(esclient, all_indices, indices_config):
     index_client = elasticsearch.client.IndicesClient(esclient)
 
     indices = {
-        "close": set(),
-        "delete": set(),
-        "optimize": set(),
-        "optimize_nowait": set(),
-        "reallocate": set()
+        "close": dict(),
+        "delete": dict(),
+        "optimize": dict(),
+        "optimize_nowait": dict(),
+        "reallocate": dict()
     }
 
     close_replic_indices = dict()
@@ -132,25 +132,28 @@ def filter_indices(esclient, all_indices, indices_config):
                 if action == "optimize":
                     if datetime.timedelta(v) == today-date:
                         if settings.get("close_replic", False):
-                            index_settings = index_client.get_settings(index=indexname)
+                            index_settings = index_client.get_settings(
+                                index=indexname)
                             close_replic_indices[indexname] = index_settings[
-                                indexname]['settings']['index']['number_of_replicas']
+                                indexname]['settings']['index'][
+                                'number_of_replicas']
 
                         if optimize_nowait is False:
-                            indices["optimize"].add(indexname)
+                            indices["optimize"][indexname] = settings
                         else:
-                            indices["optimize_nowait"].add(indexname)
+                            indices["optimize_nowait"][indexname] = settings
                 else:
                     if datetime.timedelta(v) <= today-date:
-                        indices[action].add(indexname)
+                        indices[action][indexname] = settings
             break
         else:
             not_involved.add(indexname)
 
-    indices["reallocate"].difference_update(indices["delete"])
-    for k, v in indices.items():
-        indices[k] = list(v)
+    indices["reallocate"] = dict([(k,v) for k,v in indices["reallocate"].items() if k not in indices["delete"]])
+    indices["close"] = dict([(k,v) for k,v in indices["close"].items() if k not in indices["delete"]])
+
     not_involved = list(not_involved)
+
     return indices, close_replic_indices, not_involved
 
 
@@ -162,6 +165,7 @@ def get_relo_index_cnt(esclient):
 def close_indices(esclient, indices):
     if not indices:
         return
+    indices = indices.keys()
     logger.debug("try to close %s" % ','.join(indices))
     if curator.close_indices(esclient, indices):
         logger.info('indices closed: %s' % ','.join(indices))
@@ -170,18 +174,19 @@ def close_indices(esclient, indices):
 def delete_indices(esclient, indices):
     if not indices:
         return
+    indices = indices.keys()
     logger.debug("try to delete %s" % ','.join(indices))
     for index in indices:
         if curator.delete_indices(esclient, [index]):
             logger.info('%s deleted' % index)
 
 
-def optimize_index(esclient, index):
+def optimize_index(esclient, index, settings):
     try:
         if curator.optimize_index(
                 esclient,
                 index,
-                max_num_segments=1,
+                max_num_segments=settings.get("max_num_segments", 1),
                 request_timeout=18 *
                 3600):
             logger.info('%s optimized' % index)
@@ -196,11 +201,11 @@ def optimize_index(esclient, index):
 def optimize_indices(esclient, indices):
     if not indices:
         return []
-    logger.debug("try to optimize %s" % ','.join(indices))
+    logger.debug("try to optimize %s" % ','.join(indices.keys()))
 
     threads = []
-    for index in indices:
-        t = Thread(target=optimize_index, args=(esclient, index,))
+    for index, settings in indices.items():
+        t = Thread(target=optimize_index, args=(esclient, index, settings))
         t.start()
         threads.append(t)
 
@@ -262,7 +267,7 @@ def main():
     dopey_summary.add(
         u"今日维护工作: \n%s" %
         json.dumps(
-            action_indices,
+            dict([(k,v.keys()) for k,v in action_indices.items()]),
             indent=2))
 
     logger.info(close_replic_indices)
