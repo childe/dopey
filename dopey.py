@@ -111,6 +111,8 @@ def filter_indices(esclient, all_indices, indices_config):
                 not_involved.add(indexname)
                 continue
         date = date.date()
+        if (date > today):
+            not_involved.add(indexname)
 
         logger.debug(date)
         logger.debug(today-date)
