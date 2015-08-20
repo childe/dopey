@@ -237,6 +237,48 @@ def recovery_replic(esclient, indices):
         )
 
 
+
+def optimizea_and_then_reallocate(esclient,action_indices):
+    dopey_summary.add(u"开始optimize需要等待的索引")
+    optimize_threads = optimize_indices(esclient, action_indices['optimize'])
+    for t in optimize_threads:
+        t.join()
+
+    dopey_summary.add(u"开始reallocate索引")
+    curator.api.allocation(
+        esclient,
+        list(action_indices['reallocate']),
+        rule="tag=cores8")
+
+    while True:
+        relo_cnt = get_relo_index_cnt(esclient)
+        logger.info("relocation indices count: %s" % relo_cnt)
+        if relo_cnt == 0:
+            break
+        time.sleep(10*60)
+    dopey_summary.add(u"reallocate索引完成")
+
+def reallocate_and_then_optimize(esclient,action_indices):
+    dopey_summary.add(u"开始reallocate索引")
+    curator.api.allocation(
+        esclient,
+        list(action_indices['reallocate']),
+        rule="tag=cores8")
+
+    while True:
+        relo_cnt = get_relo_index_cnt(esclient)
+        logger.info("relocation indices count: %s" % relo_cnt)
+        if relo_cnt == 0:
+            break
+        time.sleep(10*60)
+    dopey_summary.add(u"reallocate索引完成")
+
+    dopey_summary.add(u"开始optimize需要等待的索引")
+    optimize_threads = optimize_indices(esclient, action_indices['optimize'])
+
+    for t in optimize_threads:
+        t.join()
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", default="dopey.yaml", help="yaml config")
@@ -298,31 +340,22 @@ def main():
     delete_indices(esclient, action_indices['delete'])
     dopey_summary.add(u"索引已经删除")
 
-    dopey_summary.add(u"开始reallocate索引")
-    curator.api.allocation(
-        esclient,
-        list(action_indices['reallocate']),
-        rule="tag=cores8")
+
+    reallocate =  config.get("reallocate","first")
+    if reallocate.lower()!="last":
+        reallocate = "first"
 
     dopey_summary.add(u"开始optimize不需要等待的索引")
     optimize_nowait_threads = optimize_indices(
         esclient,
         action_indices['optimize_nowait'])
 
-    while True:
-        relo_cnt = get_relo_index_cnt(esclient)
-        logger.info("relocation indices count: %s" % relo_cnt)
-        if relo_cnt == 0:
-            break
-        time.sleep(10*60)
-    dopey_summary.add(u"reallocate索引完成")
-
-    dopey_summary.add(u"开始optimize需要等待的索引")
-    optimize_threads = optimize_indices(esclient, action_indices['optimize'])
+    if reallocate == "first":
+        reallocate_and_then_optimize(esclient,action_indices)
+    else:
+        optimizea_and_then_reallocate(esclient,list(action_indices['reallocate']))
 
     for t in optimize_nowait_threads:
-        t.join()
-    for t in optimize_threads:
         t.join()
 
     logger.info(u"开始恢复replic")

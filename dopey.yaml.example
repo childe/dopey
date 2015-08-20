@@ -5,6 +5,9 @@ esclient:
       #url_prefix: 'es'
       #use_ssl: True
 
+reallocate: first # reallocate at first;
+#reallocate: last # reallocate after other operations
+
 sumary:
     log: null
     prints: null
