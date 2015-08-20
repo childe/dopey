@@ -151,8 +151,12 @@ def filter_indices(esclient, all_indices, indices_config):
         else:
             not_involved.add(indexname)
 
-    indices["reallocate"] = dict([(k,v) for k,v in indices["reallocate"].items() if k not in indices["delete"]])
-    indices["close"] = dict([(k,v) for k,v in indices["close"].items() if k not in indices["delete"]])
+    indices["reallocate"] = dict(
+        [(k, v) for k, v in indices["reallocate"].items
+         () if k not in indices["delete"]])
+    indices["close"] = dict(
+        [(k, v) for k, v in indices["close"].items
+         () if k not in indices["delete"]])
 
     not_involved = list(not_involved)
 
@@ -237,8 +241,7 @@ def recovery_replic(esclient, indices):
         )
 
 
-
-def optimizea_and_then_reallocate(esclient,action_indices):
+def optimizea_and_then_reallocate(esclient, action_indices):
     dopey_summary.add(u"开始optimize需要等待的索引")
     optimize_threads = optimize_indices(esclient, action_indices['optimize'])
     for t in optimize_threads:
@@ -258,7 +261,8 @@ def optimizea_and_then_reallocate(esclient,action_indices):
         time.sleep(10*60)
     dopey_summary.add(u"reallocate索引完成")
 
-def reallocate_and_then_optimize(esclient,action_indices):
+
+def reallocate_and_then_optimize(esclient, action_indices):
     dopey_summary.add(u"开始reallocate索引")
     curator.api.allocation(
         esclient,
@@ -278,6 +282,7 @@ def reallocate_and_then_optimize(esclient,action_indices):
 
     for t in optimize_threads:
         t.join()
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -311,7 +316,7 @@ def main():
     dopey_summary.add(
         u"今日维护工作: \n%s" %
         json.dumps(
-            dict([(k,v.keys()) for k,v in action_indices.items()]),
+            dict([(k, v.keys()) for k, v in action_indices.items()]),
             indent=2))
 
     logger.info(close_replic_indices)
@@ -340,9 +345,8 @@ def main():
     delete_indices(esclient, action_indices['delete'])
     dopey_summary.add(u"索引已经删除")
 
-
-    reallocate =  config.get("reallocate","first")
-    if reallocate.lower()!="last":
+    reallocate = config.get("reallocate", "first")
+    if reallocate.lower() != "last":
         reallocate = "first"
 
     dopey_summary.add(u"开始optimize不需要等待的索引")
@@ -351,9 +355,9 @@ def main():
         action_indices['optimize_nowait'])
 
     if reallocate == "first":
-        reallocate_and_then_optimize(esclient,action_indices)
+        reallocate_and_then_optimize(esclient, action_indices)
     else:
-        optimizea_and_then_reallocate(esclient,list(action_indices['reallocate']))
+        optimizea_and_then_reallocate(esclient, action_indices)
 
     for t in optimize_nowait_threads:
         t.join()
