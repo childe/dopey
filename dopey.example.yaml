@@ -22,7 +22,7 @@ indices:
     optimize: 2
     reallocate: 2
     settings:
-      optimize_nowait: false #default true
+      optimize_nowait: false #waiting for reallocating; default true
       close_replic: true #set replic to 0 before allocation if also need optimize;default false
       max_num_segments: 5 #default 1
   vpn-:
