@@ -54,9 +54,6 @@ class Sumary(object):
             logging.error(str(e))
 
 
-dopey_summary = Sumary()
-
-
 def initlog(level=None, logfile="/var/log/dopey/dopey.log"):
 
     if level is None:
@@ -75,6 +72,7 @@ def initlog(level=None, logfile="/var/log/dopey/dopey.log"):
     root_logger.addHandler(handler)
 
 logger = logging.getLogger("dopey")
+dopey_summary = Sumary()
 
 
 def filter_indices(esclient, all_indices, indices_config):
