@@ -32,7 +32,7 @@ class Sumary(object):
         return '\n'.join(self.records)
 
     def prints(self):
-        print self.sumary
+        print self.sumary.encode('utf-8')
 
     def log(self):
         logging.getLogger("DopeySumary").info(self.sumary)
