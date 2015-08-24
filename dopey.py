@@ -320,14 +320,14 @@ def process(esclient, all_indices, index_prefix, index_config):
     for indexname in all_indices:
         logging.debug("indexname: "+indexname)
         r = re.findall(
-            r'%s(\d{4}\.\d{2}\.\d{2})$'%index_prefix,
+            r'%s(\d{4}\.\d{2}\.\d{2})$' % index_prefix,
             indexname)
         if r:
             date = datetime.datetime.strptime(r[0], '%Y.%m.%d')
             rst.append(indexname)
         else:
             r = re.findall(
-                r'%s(\d{4}\.\d{2})$'%index_prefix,
+                r'%s(\d{4}\.\d{2})$' % index_prefix,
                 indexname)
             if r:
                 date = datetime.datetime.strptime(r[0], '%Y.%m')
@@ -336,7 +336,7 @@ def process(esclient, all_indices, index_prefix, index_config):
                 continue
 
         date = date.date()
-        logging.debug("date: %s"%date)
+        logging.debug("date: %s" % date)
         for e in index_config:
             action, settings = e.keys()[0], e.values()[0]
             offset = today-date
@@ -347,13 +347,12 @@ def process(esclient, all_indices, index_prefix, index_config):
                     index=indexname)
                 actions[action].append((indexname, index_settings))
 
-    #如果一个索引需要删除, 别的action里面可以直接去掉
-
+    # 如果一个索引需要删除, 别的action里面可以直接去掉
 
     for e in index_config:
         action, settings = e.keys()[0], e.values()[0]
         logger.debug(action)
-        logger.debug([e[0] for e in actions.get(action,[])])
+        logger.debug([e[0] for e in actions.get(action, [])])
         eval(action)(esclient, actions.get(action), settings)
 
     return rst
@@ -386,7 +385,13 @@ def main():
 
     process_threads = []
     for index_prefix, index_config in config.get("indices").items():
-        t = Thread(target=process, args=(esclient, all_indices, index_prefix, index_config))
+        t = Thread(
+            target=process,
+            args=(
+                esclient,
+                all_indices,
+                index_prefix,
+                index_config))
         t.start()
         process_threads.append(t)
 
