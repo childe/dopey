@@ -143,14 +143,8 @@ def optimize_indices(esclient, indices, settings):
     indices = [e[0] for e in indices]
     logger.debug("try to optimize %s" % ','.join(indices))
 
-    threads = []
     for index in indices:
-        t = Thread(target=optimize_index, args=(esclient, index, settings))
-        t.start()
-        threads.append(t)
-
-    for t in threads:
-        t.join()
+        optimize_index(esclient, index, settings)
 
 
 def reallocate_indices(esclient, indices, settings):
