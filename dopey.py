@@ -340,8 +340,10 @@ def process(esclient, all_indices, index_prefix, index_config):
         for e in index_config:
             action, settings = e.keys()[0], e.values()[0]
             offset = today-date
-            if  "day" in settings and offset == datetime.timedelta(settings["day"]) or\
+            if "day" in settings and offset == datetime.timedelta(settings["day"]) or \
                     "days" in settings and offset >= datetime.timedelta(settings["days"]):
+                if actions != "delete_indices" and indexname in actions["delete_indices"]:
+                    continue
                 actions.setdefault(action, [])
                 index_settings = index_client.get_settings(
                     index=indexname)
