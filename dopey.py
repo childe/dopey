@@ -221,7 +221,7 @@ def optimize_indices(esclient, indices, settings):
     :type esclient: elasticsearch.Elasticsearch
     :type indices: list of (indexname,index_settings)
     :type settings: dict, max_num_segments setting and so on
-    :rtype: list of Thread
+    :rtype: None
     """
     if not indices:
         return []
@@ -235,7 +235,8 @@ def optimize_indices(esclient, indices, settings):
         t.start()
         threads.append(t)
 
-    return threads
+    for t in threads:
+        t.join()
 
 
 def reallocate_indices(esclient, indices, settings):
@@ -243,10 +244,25 @@ def reallocate_indices(esclient, indices, settings):
     :type esclient: elasticsearch.Elasticsearch
     :type indices: list of (indexname,index_settings)
     :type settings: dict, max_num_segments setting and so on
-    :rtype: list of Thread
+    :rtype: None
     """
     if not indices:
         return []
+
+    indices = [e[0] for e in indices]
+    dopey_summary.add(u"开始reallocate索引")
+    curator.api.allocation(
+        esclient,
+        indices,
+        rule="tag=cores8")
+
+    while True:
+        relo_cnt = get_relo_index_cnt(esclient)
+        logger.info("relocation indices count: %s" % relo_cnt)
+        if relo_cnt == 0:
+            break
+        time.sleep(10*60)
+    dopey_summary.add(u"reallocate索引完成")
 
 
 def close_replic(esclient, indices, settings):
@@ -355,8 +371,14 @@ def main():
     all_indices = curator.get_indices(esclient)
     logger.debug("all_indices: {}".format(all_indices))
 
+    process_threads = []
     for index_prefix, index_config in config.get("indices"):
-        process(esclient, all_indices, index_prefix, index_config)
+        t = Thread(target=process, args=(esclient, all_indices, index_prefix, index_config))
+        t.start()
+        process_threads.append(t)
+
+    for t in process_threads:
+        t.join()
 
     sumary_config = config.get("sumary")
     for action, kargs in sumary_config.items():
