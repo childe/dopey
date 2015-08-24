@@ -179,7 +179,7 @@ def delete_indices(esclient, indices, settings):
         return
     indices = [e[0] for e in indices]
     logger.debug("try to delete %s" % ','.join(indices))
-    for index, index_settings in indices:
+    for index in indices:
         if curator.delete_indices(esclient, [index]):
             logger.info('%s deleted' % index)
 
@@ -230,7 +230,7 @@ def optimize_indices(esclient, indices, settings):
     logger.debug("try to optimize %s" % ','.join(indices))
 
     threads = []
-    for index, settings in indices.items():
+    for index in indices:
         t = Thread(target=optimize_index, args=(esclient, index, settings))
         t.start()
         threads.append(t)
@@ -293,7 +293,7 @@ def open_replic(esclient, indices, settings):
     """
     if not indices:
         return
-    logger.debug("try to open replic, %s" % ','.join(indices.keys()))
+    logger.debug("try to open replic, %s" % ','.join([e[0] for e in indices]))
     index_client = elasticsearch.client.IndicesClient(esclient)
     for index, index_settings in indices:
         replic = index_settings[index]['settings'][
@@ -318,30 +318,43 @@ def process(esclient, all_indices, index_prefix, index_config):
     rst = []
 
     for indexname in all_indices:
+        logging.debug("indexname: "+indexname)
         r = re.findall(
-            r'{}(\d{4}\.\d{2}\.\d{2})$'.format(index_prefix),
+            r'%s(\d{4}\.\d{2}\.\d{2})$'%index_prefix,
             indexname)
         if r:
             date = datetime.datetime.strptime(r[0], '%Y.%m.%d')
             rst.append(indexname)
         else:
             r = re.findall(
-                r'{}(\d{4}\.\d{2})$'.format(index_prefix),
+                r'%s(\d{4}\.\d{2})$'%index_prefix,
                 indexname)
             if r:
                 date = datetime.datetime.strptime(r[0], '%Y.%m')
                 rst.append(indexname)
+            else:
+                continue
 
         date = date.date()
-        for action, settings in index_config.items():
-            if date-today == settings.get("day") or date-today <= settings.get("days"):
+        logging.debug("date: %s"%date)
+        for e in index_config:
+            action, settings = e.keys()[0], e.values()[0]
+            offset = today-date
+            if  "day" in settings and offset == datetime.timedelta(settings["day"]) or\
+                    "days" in settings and offset >= datetime.timedelta(settings["days"]):
                 actions.setdefault(action, [])
                 index_settings = index_client.get_settings(
                     index=indexname)
                 actions[action].append((indexname, index_settings))
 
-    for action, settings in index_config.items():
-        eval(action)(esclient, actions[action], settings)
+    #如果一个索引需要删除, 别的action里面可以直接去掉
+
+
+    for e in index_config:
+        action, settings = e.keys()[0], e.values()[0]
+        logger.debug(action)
+        logger.debug([e[0] for e in actions.get(action,[])])
+        eval(action)(esclient, actions.get(action), settings)
 
     return rst
 
@@ -372,7 +385,7 @@ def main():
     logger.debug("all_indices: {}".format(all_indices))
 
     process_threads = []
-    for index_prefix, index_config in config.get("indices"):
+    for index_prefix, index_config in config.get("indices").items():
         t = Thread(target=process, args=(esclient, all_indices, index_prefix, index_config))
         t.start()
         process_threads.append(t)
