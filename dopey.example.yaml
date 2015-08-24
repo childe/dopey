@@ -6,7 +6,7 @@ esclient:
       #use_ssl: True
 sumary:
     log: null
-    print: null
+    prints: null
     mail:
       mail_host: "mail.corp.com"
       from_who: "jia.liu@corp.com"
