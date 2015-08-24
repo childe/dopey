@@ -16,6 +16,26 @@ import elasticsearch
 import curator
 
 
+def initlog(level=None, logfile="/var/log/dopey/dopey.log"):
+
+    if level is None:
+        level = logging.DEBUG if __debug__ else logging.INFO
+    else:
+        level = getattr(logging, level.upper())
+
+    formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s %(name)s - %(message)s")
+    handler = logging.handlers.RotatingFileHandler(
+        logfile, maxBytes=50000000, backupCount=2)
+    handler.setFormatter(formatter)
+
+    root_logger = logging.getLogger('')
+    root_logger.setLevel(level)
+    root_logger.addHandler(handler)
+
+logger = logging.getLogger("dopey")
+
+
 class Sumary(object):
 
     def __init__(self):
@@ -54,24 +74,6 @@ class Sumary(object):
             logging.error(str(e))
 
 
-def initlog(level=None, logfile="/var/log/dopey/dopey.log"):
-
-    if level is None:
-        level = logging.DEBUG if __debug__ else logging.INFO
-    else:
-        level = getattr(logging, level.upper())
-
-    formatter = logging.Formatter(
-        "%(asctime)s - %(levelname)s %(name)s - %(message)s")
-    handler = logging.handlers.RotatingFileHandler(
-        logfile, maxBytes=50000000, backupCount=2)
-    handler.setFormatter(formatter)
-
-    root_logger = logging.getLogger('')
-    root_logger.setLevel(level)
-    root_logger.addHandler(handler)
-
-logger = logging.getLogger("dopey")
 dopey_summary = Sumary()
 
 
@@ -166,23 +168,35 @@ def get_relo_index_cnt(esclient):
     return int(cnt)
 
 
-def close_indices(esclient, indices):
+def delete_indices(esclient, indices, settings):
+    """
+    :type esclient: elasticsearch.Elasticsearch
+    :type indices: list of (indexname,index_settings)
+    :type settings: dict, not used
+    :rtype: None
+    """
     if not indices:
         return
-    indices = indices.keys()
+    indices = [e[0] for e in indices]
+    logger.debug("try to delete %s" % ','.join(indices))
+    for index, index_settings in indices:
+        if curator.delete_indices(esclient, [index]):
+            logger.info('%s deleted' % index)
+
+
+def close_indices(esclient, indices, settings):
+    """
+    :type esclient: elasticsearch.Elasticsearch
+    :type indices: list of (indexname,index_settings)
+    :type settings: dict, not used
+    :rtype: None
+    """
+    if not indices:
+        return
+    indices = [e[0] for e in indices]
     logger.debug("try to close %s" % ','.join(indices))
     if curator.close_indices(esclient, indices):
         logger.info('indices closed: %s' % ','.join(indices))
-
-
-def delete_indices(esclient, indices):
-    if not indices:
-        return
-    indices = indices.keys()
-    logger.debug("try to delete %s" % ','.join(indices))
-    for index in indices:
-        if curator.delete_indices(esclient, [index]):
-            logger.info('%s deleted' % index)
 
 
 def optimize_index(esclient, index, settings):
@@ -202,10 +216,18 @@ def optimize_index(esclient, index, settings):
         dopey_summary.add(u"%s optimize 未完成退出" % index)
 
 
-def optimize_indices(esclient, indices):
+def optimize_indices(esclient, indices, settings):
+    """
+    :type esclient: elasticsearch.Elasticsearch
+    :type indices: list of (indexname,index_settings)
+    :type settings: dict, max_num_segments setting and so on
+    :rtype: list of Thread
+    """
     if not indices:
         return []
-    logger.debug("try to optimize %s" % ','.join(indices.keys()))
+
+    indices = [e[0] for e in indices]
+    logger.debug("try to optimize %s" % ','.join(indices))
 
     threads = []
     for index, settings in indices.items():
@@ -216,9 +238,28 @@ def optimize_indices(esclient, indices):
     return threads
 
 
-def close_replic(esclient, indices):
+def reallocate_indices(esclient, indices, settings):
+    """
+    :type esclient: elasticsearch.Elasticsearch
+    :type indices: list of (indexname,index_settings)
+    :type settings: dict, max_num_segments setting and so on
+    :rtype: list of Thread
+    """
+    if not indices:
+        return []
+
+
+def close_replic(esclient, indices, settings):
+    """
+    :type esclient: elasticsearch.Elasticsearch
+    :type indices: list of (indexname,index_settings)
+    :type settings: dict, not used
+    :rtype: None
+    """
     if not indices:
         return
+
+    indices = [e[0] for e in indices]
     logger.debug("try to close replic, %s" % ','.join(indices))
     index_client = elasticsearch.client.IndicesClient(esclient)
     index_client.put_settings(
@@ -227,59 +268,66 @@ def close_replic(esclient, indices):
     )
 
 
-def recovery_replic(esclient, indices):
+def open_replic(esclient, indices, settings):
+    """
+    :type esclient: elasticsearch.Elasticsearch
+    :type indices: list of (indexname,index_settings)
+    :type settings: dict, not used
+    :rtype: None
+    """
     if not indices:
         return
-    logger.debug("try to recover replic, %s" % ','.join(indices.keys()))
+    logger.debug("try to open replic, %s" % ','.join(indices.keys()))
     index_client = elasticsearch.client.IndicesClient(esclient)
-    for index, replic in indices.items():
+    for index, index_settings in indices:
+        replic = index_settings[index]['settings'][
+            'index']['number_of_replicas']
         index_client.put_settings(
             index=index,
             body={"index.number_of_replicas": replic}
         )
 
 
-def optimizea_and_then_reallocate(esclient, action_indices):
-    dopey_summary.add(u"开始optimize需要等待的索引")
-    optimize_threads = optimize_indices(esclient, action_indices['optimize'])
-    for t in optimize_threads:
-        t.join()
+def process(esclient, all_indices, index_prefix, index_config):
+    """
+    :type esclient: elasticsearch.Elasticsearch
+    :type all_indices: list of str
+    :type index_prefix: str
+    :type index_config: list of actions
+    :rtype: list of indexname
+    """
+    index_client = elasticsearch.client.IndicesClient(esclient)
+    today = datetime.date.today()
+    actions = {}
+    rst = []
 
-    dopey_summary.add(u"开始reallocate索引")
-    curator.api.allocation(
-        esclient,
-        list(action_indices['reallocate']),
-        rule="tag=cores8")
+    for indexname in all_indices:
+        r = re.findall(
+            r'{}(\d{4}\.\d{2}\.\d{2})$'.format(index_prefix),
+            indexname)
+        if r:
+            date = datetime.datetime.strptime(r[0], '%Y.%m.%d')
+            rst.append(indexname)
+        else:
+            r = re.findall(
+                r'{}(\d{4}\.\d{2})$'.format(index_prefix),
+                indexname)
+            if r:
+                date = datetime.datetime.strptime(r[0], '%Y.%m')
+                rst.append(indexname)
 
-    while True:
-        relo_cnt = get_relo_index_cnt(esclient)
-        logger.info("relocation indices count: %s" % relo_cnt)
-        if relo_cnt == 0:
-            break
-        time.sleep(10*60)
-    dopey_summary.add(u"reallocate索引完成")
+        date = date.date()
+        for action, settings in index_config.items():
+            if date-today == settings.get("day") or date-today <= settings.get("days"):
+                actions.setdefault(action, [])
+                index_settings = index_client.get_settings(
+                    index=indexname)
+                actions[action].append((indexname, index_settings))
 
+    for action, settings in index_config.items():
+        eval(action)(esclient, actions[action], settings)
 
-def reallocate_and_then_optimize(esclient, action_indices):
-    dopey_summary.add(u"开始reallocate索引")
-    curator.api.allocation(
-        esclient,
-        list(action_indices['reallocate']),
-        rule="tag=cores8")
-
-    while True:
-        relo_cnt = get_relo_index_cnt(esclient)
-        logger.info("relocation indices count: %s" % relo_cnt)
-        if relo_cnt == 0:
-            break
-        time.sleep(10*60)
-    dopey_summary.add(u"reallocate索引完成")
-
-    dopey_summary.add(u"开始optimize需要等待的索引")
-    optimize_threads = optimize_indices(esclient, action_indices['optimize'])
-
-    for t in optimize_threads:
-        t.join()
+    return rst
 
 
 def main():
@@ -305,66 +353,77 @@ def main():
         esclient = elasticsearch.Elasticsearch()
 
     all_indices = curator.get_indices(esclient)
-    logger.debug(all_indices)
+    logger.debug("all_indices: {}".format(all_indices))
 
-    action_indices, close_replic_indices, not_involved = filter_indices(
-        esclient, all_indices, config['indices'])
+    for index_prefix, index_config in config.get("indices"):
+        process(esclient, all_indices, index_prefix, index_config)
 
-    logger.info(action_indices)
-    dopey_summary.add(
-        u"今日维护工作: \n%s" %
-        json.dumps(
-            dict([(k, v.keys()) for k, v in action_indices.items()]),
-            indent=2))
+    sumary_config = config.get("sumary")
+    for action, kargs in sumary_config.items():
+        if kargs:
+            getattr(dopey_summary, action)(**kargs)
+        else:
+            getattr(dopey_summary, action)()
 
-    logger.info(close_replic_indices)
-    dopey_summary.add(
-        u"需要先关闭replic的索引: \n%s" %
-        json.dumps(
-            close_replic_indices,
-            indent=2))
+    return
+    # action_indices, close_replic_indices, not_involved = filter_indices(
+        # esclient, all_indices, config['indices'])
 
-    logger.info(not_involved)
-    dopey_summary.add(
-        u"未配置的索引: \n%s" %
-        json.dumps(
-            not_involved,
-            indent=2))
+    # logger.info(action_indices)
+    # dopey_summary.add(
+        # u"今日维护工作: \n%s" %
+        # json.dumps(
+            #dict([(k, v.keys()) for k, v in action_indices.items()]),
+            # indent=2))
 
-    dopey_summary.add(u"开始关闭replic")
-    close_replic(esclient, close_replic_indices.keys())
-    dopey_summary.add(u"replic已经关闭")
+    # logger.info(close_replic_indices)
+    # dopey_summary.add(
+        # u"需要先关闭replic的索引: \n%s" %
+        # json.dumps(
+            # close_replic_indices,
+            # indent=2))
 
-    dopey_summary.add(u"开始关闭索引")
-    close_indices(esclient, action_indices['close'])
-    dopey_summary.add(u"索引已经关闭")
+    # logger.info(not_involved)
+    # dopey_summary.add(
+        # u"未配置的索引: \n%s" %
+        # json.dumps(
+            # not_involved,
+            # indent=2))
 
-    dopey_summary.add(u"开始删除索引")
-    delete_indices(esclient, action_indices['delete'])
-    dopey_summary.add(u"索引已经删除")
+    # dopey_summary.add(u"开始关闭replic")
+    #close_replic(esclient, close_replic_indices.keys())
+    # dopey_summary.add(u"replic已经关闭")
 
-    reallocate = config.get("reallocate", "first")
-    if reallocate.lower() != "last":
-        reallocate = "first"
+    # dopey_summary.add(u"开始关闭索引")
+    #close_indices(esclient, action_indices['close'])
+    # dopey_summary.add(u"索引已经关闭")
 
-    dopey_summary.add(u"开始optimize不需要等待的索引")
-    optimize_nowait_threads = optimize_indices(
-        esclient,
-        action_indices['optimize_nowait'])
+    # dopey_summary.add(u"开始删除索引")
+    #delete_indices(esclient, action_indices['delete'])
+    # dopey_summary.add(u"索引已经删除")
 
-    if reallocate == "first":
-        reallocate_and_then_optimize(esclient, action_indices)
-    else:
-        optimizea_and_then_reallocate(esclient, action_indices)
+    #reallocate = config.get("reallocate", "first")
+    # if reallocate.lower() != "last":
+        #reallocate = "first"
 
-    for t in optimize_nowait_threads:
-        t.join()
+    # dopey_summary.add(u"开始optimize不需要等待的索引")
+    # optimize_nowait_threads = optimize_indices(
+        # esclient,
+        # action_indices['optimize_nowait'])
 
-    logger.info(u"开始恢复replic")
-    dopey_summary.add(u"开始恢复replic")
-    recovery_replic(esclient, close_replic_indices)
-    logger.info(u"已经恢复replic配置")
-    dopey_summary.add(u"开始恢复replic配置")
+    # if reallocate == "first":
+        #reallocate_and_then_optimize(esclient, action_indices)
+    # else:
+        #optimizea_and_then_reallocate(esclient, action_indices)
+
+    # for t in optimize_nowait_threads:
+        # t.join()
+
+    # logger.info(u"开始恢复replic")
+    # dopey_summary.add(u"开始恢复replic")
+    #recovery_replic(esclient, close_replic_indices)
+    # logger.info(u"已经恢复replic配置")
+    # dopey_summary.add(u"开始恢复replic配置")
 
     sumary_config = config.get("sumary")
     for action, kargs in sumary_config.items():
