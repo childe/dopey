@@ -96,6 +96,7 @@ def delete_indices(esclient, indices, settings):
     for index in indices:
         if curator.delete_indices(esclient, [index]):
             logger.info('%s deleted' % index)
+            dopey_summary.add(u'%s 己删除' % index)
 
 
 def close_indices(esclient, indices, settings):
@@ -111,6 +112,7 @@ def close_indices(esclient, indices, settings):
     logger.debug("try to close %s" % ','.join(indices))
     if curator.close_indices(esclient, indices):
         logger.info('indices closed: %s' % ','.join(indices))
+        dopey_summary.add(u'indices 已关闭: %s' % ','.join(indices))
 
 
 def optimize_index(esclient, index, settings):
@@ -158,7 +160,7 @@ def reallocate_indices(esclient, indices, settings):
         return []
 
     indices = [e[0] for e in indices]
-    dopey_summary.add(u"开始reallocate索引")
+    dopey_summary.add(u"%s 开始reallocate" % ",".join(indices))
     curator.api.allocation(
         esclient,
         indices,
@@ -170,7 +172,7 @@ def reallocate_indices(esclient, indices, settings):
         if relo_cnt == 0:
             break
         time.sleep(10*60)
-    dopey_summary.add(u"reallocate索引完成")
+    dopey_summary.add(u"%s reallocate完成" % ",".join(indices))
 
 
 def close_replic(esclient, indices, settings):
@@ -185,6 +187,7 @@ def close_replic(esclient, indices, settings):
 
     indices = [e[0] for e in indices]
     logger.debug("try to close replic, %s" % ','.join(indices))
+    dopey_summary.add(u"%s 关闭replic" % ",".join(indices))
     index_client = elasticsearch.client.IndicesClient(esclient)
     index_client.put_settings(
         index=",".join(indices),
@@ -202,6 +205,7 @@ def open_replic(esclient, indices, settings):
     if not indices:
         return
     logger.debug("try to open replic, %s" % ','.join([e[0] for e in indices]))
+    dopey_summary.add(u"%s 打开replic" % ",".join([e[0] for e in indices]))
     index_client = elasticsearch.client.IndicesClient(esclient)
     for index, index_settings in indices:
         replic = index_settings[index]['settings'][
