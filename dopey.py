@@ -3,7 +3,6 @@
 import yaml
 import re
 import datetime
-import json
 import time
 import argparse
 from threading import Thread
@@ -16,24 +15,73 @@ import elasticsearch
 import curator
 
 
-def initlog(level=None, logfile="/var/log/dopey/dopey.log"):
+import logging
+import logging.config
 
+
+def initlog(level=None, log="-"):
     if level is None:
         level = logging.DEBUG if __debug__ else logging.INFO
-    else:
+    if isinstance(level, basestring):
         level = getattr(logging, level.upper())
 
-    formatter = logging.Formatter(
-        "%(asctime)s - %(levelname)s %(name)s - %(message)s")
-    handler = logging.handlers.RotatingFileHandler(
-        logfile, maxBytes=50000000, backupCount=2)
-    handler.setFormatter(formatter)
+    class MyFormatter(logging.Formatter):
 
-    root_logger = logging.getLogger('')
-    root_logger.setLevel(level)
-    root_logger.addHandler(handler)
+        def format(self, record):
+            dformatter = '[%(asctime)s] %(levelname)s %(name)s %(pathname)s %(lineno)d - %(message)s'
+            formatter = '[%(asctime)s] %(levelname)s %(name)s %(message)s'
+            if record.levelno <= logging.DEBUG:
+                self._fmt = dformatter
+            else:
+                self._fmt = formatter
+            return super(MyFormatter, self).format(record)
 
-logger = logging.getLogger("dopey")
+    config = {
+        "version": 1,
+        "disable_existing_loggers": True,
+        "formatters": {
+            "custom": {
+                '()': MyFormatter
+            },
+            "simple": {
+                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            },
+            "verbose": {
+                "format": "%(asctime)s - %(levelname)s - %(module)s %(lineno)d - %(message)s"
+            }
+        },
+        "handlers": {
+        },
+        'root': {
+            'level': level,
+            'handlers': ['console']
+        }
+    }
+    console = {
+        "class": "logging.StreamHandler",
+        "level": "DEBUG",
+        "formatter": "custom",
+        "stream": "ext://sys.stdout"
+    }
+    file_handler = {
+        "class": "logging.handlers.RotatingFileHandler",
+        "level": "DEBUG",
+        "formatter": "custom",
+        "filename": log,
+        "maxBytes": 10*1000**3,  # 10M
+        "backupCount": 5,
+        "encoding": "utf8"
+    }
+    if log == "-":
+        config["handlers"]["console"] = console
+        config["root"]["handlers"] = ["console"]
+    else:
+        config["handlers"]["file_handler"] = file_handler
+        config["root"]["handlers"] = ["file_handler"]
+    logging.config.dictConfig(config)
+
+
+logger = None
 
 
 class Sumary(object):
@@ -164,7 +212,7 @@ def reallocate_indices(esclient, indices, settings):
     curator.api.allocation(
         esclient,
         indices,
-        rule="tag=cores8")
+        rule=settings.get("rule"))
 
     while True:
         relo_cnt = get_relo_index_cnt(esclient)
@@ -261,7 +309,7 @@ def process(esclient, all_indices, index_prefix, index_config):
                     index=indexname)
                 actions[action].append((indexname, index_settings))
 
-    # 如果一个索引需要删除, 别的action里面可以直接去掉
+    # TODO 如果一个索引需要删除, 别的action里面可以直接去掉
 
     for e in index_config:
         action, settings = e.keys()[0], e.values()[0]
@@ -273,11 +321,12 @@ def process(esclient, all_indices, index_prefix, index_config):
 
 
 def main():
+    global logger
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", default="dopey.yaml", help="yaml config")
     parser.add_argument(
         "-l",
-        default="/var/log/dopey/dopey.log",
+        default="-",
         help="log file")
     parser.add_argument("--level", default="info")
     args = parser.parse_args()
@@ -285,10 +334,12 @@ def main():
     config = yaml.load(open(args.c))
 
     initlog(
-        level=args.level, logfile=config["log"]
+        level=args.level, log=config["l"]
         if "log" in config else args.l)
+    logger = logging.getLogger("dopey")
 
     eshosts = config.get("esclient")
+    logger.debug(eshosts)
     if eshosts is not None:
         esclient = elasticsearch.Elasticsearch(eshosts)
     else:
@@ -296,6 +347,8 @@ def main():
 
     all_indices = curator.get_indices(esclient)
     logger.debug("all_indices: {}".format(all_indices))
+    if all_indices is False:
+        raise Exception("could not get indices")
 
     process_threads = []
     for index_prefix, index_config in config.get("indices").items():
