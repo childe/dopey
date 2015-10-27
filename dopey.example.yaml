@@ -1,9 +1,7 @@
 #log: dopey.log
 esclient:
-    - host: 127.0.0.1
-      #port: 9200
-      #url_prefix: 'es'
-      #use_ssl: True
+    - http://user:secret@localhost:9200/
+    - https://user:secret@other_host:443/production
 sumary:
     log: null
     prints: null
@@ -16,25 +14,16 @@ sumary:
 indices:
   test1-:
     - delete_indices: 
-        days: 10 # <=10 days
+        days: 7 # <=10 days
+    - close_indices: 
+        day: 3 # == 1 day
     - close_replic: 
         day: 1 # == 1 day
     - optimize_indices: 
         day: 1
-        max_num_segments: 5 #default 1
+        max_num_segments: 1 #default 1
     - reallocate_indices: 
         days: 2
+        rule: tag=core8
     - open_replic: 
-        day: 1
-  test2-:
-    - delete_indices: 
-        days: 10
-    - close_replic: 
-        day: 1
-    - optimize_indices: 
-        day: 1
-        max_num_segments: 1
-    - reallocate_indices: 
-        days: 2
-    - open_replic: 
-        day: 1
+        day: 1 # == 1 day
