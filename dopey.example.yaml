@@ -16,7 +16,7 @@ indices:
     - delete_indices: 
         days: 7 # <=10 days
     - close_indices: 
-        day: 3 # == 1 day
+        days: 3 # <= 3 days
     - close_replic: 
         day: 1 # == 1 day
     - optimize_indices: 
@@ -24,6 +24,6 @@ indices:
         max_num_segments: 1 #default 1
     - reallocate_indices: 
         days: 2
-        rule: tag=core8
+        rule: tag=cores8
     - open_replic: 
         day: 1 # == 1 day
