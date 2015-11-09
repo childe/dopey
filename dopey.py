@@ -4,6 +4,7 @@ import yaml
 import re
 import datetime
 import time
+import json
 import argparse
 from threading import Thread
 import logging
@@ -124,6 +125,11 @@ class Sumary(object):
 
 dopey_summary = Sumary()
 
+_delete = []
+_close = []
+_optimize = []
+_dealt = []
+
 
 def get_relo_index_cnt(esclient):
     cnt = elasticsearch.client.CatClient(esclient).health(h="relo")
@@ -140,6 +146,7 @@ def delete_indices(esclient, indices, settings):
     if not indices:
         return
     indices = [e[0] for e in indices]
+    _delete.extend(indices)
     logger.debug("try to delete %s" % ','.join(indices))
     for index in indices:
         if curator.delete_indices(esclient, [index]):
@@ -157,6 +164,7 @@ def close_indices(esclient, indices, settings):
     if not indices:
         return
     indices = [e[0] for e in indices]
+    _close.extend(indices)
     logger.debug("try to close %s" % ','.join(indices))
     if curator.close_indices(esclient, indices):
         logger.info('indices closed: %s' % ','.join(indices))
@@ -191,6 +199,7 @@ def optimize_indices(esclient, indices, settings):
         return []
 
     indices = [e[0] for e in indices]
+    _optimize.extend(indices)
     logger.debug("try to optimize %s" % ','.join(indices))
 
     for index in indices:
@@ -317,6 +326,7 @@ def process(esclient, all_indices, index_prefix, index_config):
         logger.debug([e[0] for e in actions.get(action, [])])
         eval(action)(esclient, actions.get(action), settings)
 
+    _dealt.extend(rst)
     return rst
 
 
@@ -365,6 +375,11 @@ def main():
     for t in process_threads:
         t.join()
 
+    not_dealt = list(set(all_indices).difference(_dealt))
+    dopey_summary.add(
+        json.dumps(
+            {"not_dealt": not_dealt, "delete": _delete, "close": _close,
+             "optimize": _optimize}, indent=2))
     sumary_config = config.get("sumary")
     for action, kargs in sumary_config.items():
         if kargs:
