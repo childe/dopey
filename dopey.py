@@ -148,6 +148,7 @@ def delete_indices(esclient, indices, settings):
     indices = [e[0] for e in indices]
     _delete.extend(indices)
     logger.debug("try to delete %s" % ','.join(indices))
+    global lock
     with lock:
         for index in indices:
             if curator.delete_indices(esclient, [index]):
