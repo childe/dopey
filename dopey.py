@@ -6,7 +6,7 @@ import datetime
 import time
 import json
 import argparse
-from threading import Thread
+from threading import Thread,Lock
 import logging
 import logging.handlers
 import logging.config
@@ -83,7 +83,7 @@ def initlog(level=None, log="-"):
 
 
 logger = None
-
+lock = Lock()
 
 class Sumary(object):
 
@@ -148,10 +148,11 @@ def delete_indices(esclient, indices, settings):
     indices = [e[0] for e in indices]
     _delete.extend(indices)
     logger.debug("try to delete %s" % ','.join(indices))
-    for index in indices:
-        if curator.delete_indices(esclient, [index]):
-            logger.info('%s deleted' % index)
-            dopey_summary.add(u'%s 己删除' % index)
+    with lock:
+        for index in indices:
+            if curator.delete_indices(esclient, [index]):
+                logger.info('%s deleted' % index)
+                dopey_summary.add(u'%s 己删除' % index)
 
 
 def close_indices(esclient, indices, settings):
