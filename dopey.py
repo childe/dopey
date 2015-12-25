@@ -291,14 +291,14 @@ def process(esclient, all_indices, index_prefix, index_config):
     for indexname in all_indices:
         logging.debug("indexname: "+indexname)
         r = re.findall(
-            r'%s(\d{4}\.\d{2}\.\d{2})$' % index_prefix,
+            r'^%s(\d{4}\.\d{2}\.\d{2})$' % index_prefix,
             indexname)
         if r:
             date = datetime.datetime.strptime(r[0], '%Y.%m.%d')
             rst.append(indexname)
         else:
             r = re.findall(
-                r'%s(\d{4}\.\d{2})$' % index_prefix,
+                r'^%s(\d{4}\.\d{2})$' % index_prefix,
                 indexname)
             if r:
                 date = datetime.datetime.strptime(r[0], '%Y.%m')
