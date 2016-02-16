@@ -225,13 +225,14 @@ def reallocate_indices(esclient, indices, settings):
         indices,
         rule=settings.get("rule"))
 
-    while True:
-        relo_cnt = get_relo_index_cnt(esclient)
-        logger.info("relocation indices count: %s" % relo_cnt)
-        if relo_cnt == 0:
-            break
-        time.sleep(10*60)
-    dopey_summary.add(u"%s reallocate完成" % ",".join(indices))
+    # while True:
+        # relo_cnt = get_relo_index_cnt(esclient)
+        # logger.info("relocation indices count: %s" % relo_cnt)
+        # if relo_cnt == 0:
+            # break
+        # time.sleep(10*60)
+    # dopey_summary.add(u"%s reallocate完成" % ",".join(indices))
+    dopey_summary.add(u"%s reallocate开始" % ",".join(indices))
 
 
 def close_replic(esclient, indices, settings):
