@@ -174,6 +174,7 @@ def close_indices(esclient, indices, settings):
 
 
 def optimize_index(esclient, index, settings):
+    dopey_summary.add(u"%s optimize 开始" % index)
     try:
         if curator.optimize_index(
                 esclient,
