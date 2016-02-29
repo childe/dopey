@@ -232,8 +232,7 @@ def reallocate_indices(esclient, indices, settings):
         # if relo_cnt == 0:
             # break
         # time.sleep(10*60)
-    # dopey_summary.add(u"%s reallocate完成" % ",".join(indices))
-    dopey_summary.add(u"%s reallocate开始" % ",".join(indices))
+    dopey_summary.add(u"%s reallocate 已经开始" % ",".join(indices))
 
 
 def close_replic(esclient, indices, settings):
