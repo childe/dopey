@@ -251,7 +251,8 @@ def close_replic(esclient, indices, settings):
     index_client = elasticsearch.client.IndicesClient(esclient)
     index_client.put_settings(
         index=",".join(indices),
-        body={"index.number_of_replicas": 0}
+        body={"index.number_of_replicas": 0},
+        parmas = {'request_timeout':30}
     )
 
 
@@ -272,7 +273,8 @@ def open_replic(esclient, indices, settings):
             'index']['number_of_replicas']
         index_client.put_settings(
             index=index,
-            body={"index.number_of_replicas": replic}
+            body={"index.number_of_replicas": replic},
+            parmas = {'request_timeout':30}
         )
 
 
