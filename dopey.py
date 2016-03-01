@@ -327,7 +327,10 @@ def process(esclient, all_indices, index_prefix, index_config):
         action, settings = e.keys()[0], e.values()[0]
         logger.debug(action)
         logger.debug([e[0] for e in actions.get(action, [])])
-        eval(action)(esclient, actions.get(action), settings)
+        try:
+            eval(action)(esclient, actions.get(action), settings)
+        except:
+            logging.warn('%s action failed' % action)
 
     _dealt.extend(rst)
     return rst
