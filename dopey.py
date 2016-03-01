@@ -29,8 +29,8 @@ def initlog(level=None, log="-"):
     class MyFormatter(logging.Formatter):
 
         def format(self, record):
-            dformatter = '[%(asctime)s] %(levelname)s %(name)s %(pathname)s %(lineno)d - %(message)s'
-            formatter = '[%(asctime)s] %(levelname)s %(name)s %(message)s'
+            dformatter = '[%(asctime)s] %(levelname)s %(thread)d %(name)s %(pathname)s %(lineno)d - %(message)s'
+            formatter = '[%(asctime)s] %(levelname)s %(thread)d %(name)s %(message)s'
             if record.levelno <= logging.DEBUG:
                 self._fmt = dformatter
             else:
@@ -45,10 +45,10 @@ def initlog(level=None, log="-"):
                 '()': MyFormatter
             },
             "simple": {
-                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                "format": "[%(asctime)s] %(levelname)s %(thread)d %(name)s %(message)s"
             },
             "verbose": {
-                "format": "%(asctime)s - %(levelname)s - %(module)s %(lineno)d - %(message)s"
+                "format": "[%(asctime)s] %(levelname)s %(thread)d %(name)s %(pathname)s %(lineno)d - %(message)s"
             }
         },
         "handlers": {
@@ -69,7 +69,7 @@ def initlog(level=None, log="-"):
         "level": "DEBUG",
         "formatter": "custom",
         "filename": log,
-        "maxBytes": 10*1000**3,  # 10M
+        "maxBytes": 10*1000**2,  # 10M
         "backupCount": 5,
         "encoding": "utf8"
     }
