@@ -312,7 +312,6 @@ def process(esclient, all_indices, index_prefix, index_config):
                 continue
 
         date = date.date()
-        logging.debug("date: %s" % date)
         for e in index_config:
             action, settings = e.keys()[0], e.values()[0]
             offset = today-date
