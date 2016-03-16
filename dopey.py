@@ -295,7 +295,6 @@ def process(esclient, all_indices, index_prefix, index_config):
     rst = []
 
     for indexname in all_indices:
-        logging.debug("indexname: "+indexname)
         r = re.findall(
             r'^%s(\d{4}\.\d{2}\.\d{2})$' % index_prefix,
             indexname)
