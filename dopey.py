@@ -151,9 +151,12 @@ def delete_indices(esclient, indices, settings):
     global lock
     with lock:
         for index in indices:
-            if curator.delete_indices(esclient, [index]):
+            if curator.delete_indices(esclient, [index], master_timeout='300000ms'):
                 logger.info('%s deleted' % index)
                 dopey_summary.add(u'%s 己删除' % index)
+            else:
+                logger.warn('%s deleted' % index)
+                dopey_summary.add(u'%s 删除失败' % index)
 
 
 def close_indices(esclient, indices, settings):
