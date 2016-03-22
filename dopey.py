@@ -151,11 +151,11 @@ def delete_indices(esclient, indices, settings):
     global lock
     with lock:
         for index in indices:
-            if curator.delete_indices(esclient, [index], master_timeout='300000ms'):
+            if curator.delete_indices(esclient, [index], master_timeout='30000ms'):
                 logger.info('%s deleted' % index)
                 dopey_summary.add(u'%s 己删除' % index)
             else:
-                logger.warn('%s deleted' % index)
+                logger.warn('%s deleted failed' % index)
                 dopey_summary.add(u'%s 删除失败' % index)
 
 
@@ -360,9 +360,9 @@ def main():
     eshosts = config.get("esclient")
     logger.debug(eshosts)
     if eshosts is not None:
-        esclient = elasticsearch.Elasticsearch(eshosts)
+        esclient = elasticsearch.Elasticsearch(eshosts, timeout=30)
     else:
-        esclient = elasticsearch.Elasticsearch()
+        esclient = elasticsearch.Elasticsearch(timeout=30)
 
     all_indices = curator.get_indices(esclient)
     logger.debug("all_indices: {}".format(all_indices))
