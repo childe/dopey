@@ -171,9 +171,13 @@ def close_indices(esclient, indices, settings):
     indices = [e[0] for e in indices]
     _close.extend(indices)
     logger.debug("try to close %s" % ','.join(indices))
-    if curator.close_indices(esclient, indices):
-        logger.info('indices closed: %s' % ','.join(indices))
-        dopey_summary.add(u'indices 已关闭: %s' % ','.join(indices))
+    for index in indices:
+        if curator.close_indices(esclient, [index]):
+            logger.info('%s closed' % index)
+            dopey_summary.add(u'%s 已关闭' % index)
+        else:
+            logger.warn('%s closed failed' % index)
+            dopey_summary.add(u'%s 关闭失败' % index)
 
 
 def optimize_index(esclient, index, settings):
