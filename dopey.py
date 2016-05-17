@@ -259,7 +259,7 @@ def close_replic(esclient, indices, settings):
     index_client.put_settings(
         index=",".join(indices),
         body={"index.number_of_replicas": 0},
-        params = {'request_timeout':30}
+        params = {'master_timeout':'60s'}
     )
 
 
@@ -281,7 +281,7 @@ def open_replic(esclient, indices, settings):
         index_client.put_settings(
             index=index,
             body={"index.number_of_replicas": replic},
-            params = {'request_timeout':30}
+            params = {'master_timeout':'60s'}
         )
 
 
