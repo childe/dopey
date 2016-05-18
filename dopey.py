@@ -151,7 +151,7 @@ def delete_indices(esclient, indices, settings):
     global lock
     with lock:
         for index in indices:
-            if curator.delete_indices(esclient, [index], master_timeout='30000ms'):
+            if curator.delete_indices(esclient, [index], master_timeout='300s'):
                 logger.info('%s deleted' % index)
                 dopey_summary.add(u'%s 己删除' % index)
             else:
@@ -259,7 +259,7 @@ def close_replic(esclient, indices, settings):
     index_client.put_settings(
         index=",".join(indices),
         body={"index.number_of_replicas": 0},
-        params = {'master_timeout':'60s'}
+        params = {'master_timeout':'300s'}
     )
 
 
@@ -281,7 +281,7 @@ def open_replic(esclient, indices, settings):
         index_client.put_settings(
             index=index,
             body={"index.number_of_replicas": replic},
-            params = {'master_timeout':'60s'}
+            params = {'master_timeout':'300s'}
         )
 
 
