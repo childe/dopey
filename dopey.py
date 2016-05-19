@@ -364,9 +364,9 @@ def main():
     eshosts = config.get("esclient")
     logger.debug(eshosts)
     if eshosts is not None:
-        esclient = elasticsearch.Elasticsearch(eshosts, timeout=30)
+        esclient = elasticsearch.Elasticsearch(eshosts, timeout=300)
     else:
-        esclient = elasticsearch.Elasticsearch(timeout=30)
+        esclient = elasticsearch.Elasticsearch(timeout=300)
 
     all_indices = curator.get_indices(esclient)
     logger.debug("all_indices: {}".format(all_indices))
