@@ -11,3 +11,14 @@ wheel==0.24.0
 
 # 使用
 dopey.py -c dopey.yaml -l /var/log/dopey.log --level debug
+
+## 下面这样可以实现: 按月建的索引, 在34天后删除, 按天建的索引, 2天后删除
+
+```
+  .*-(?=\d{4}\.\d{2}$):
+    - delete_indices:
+        days: 34
+  .*-(?=\d{4}\.\d{2}\.\d{2}$):
+    - delete_indices:
+        days: 2
+```
