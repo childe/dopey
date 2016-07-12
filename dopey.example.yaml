@@ -14,7 +14,7 @@ sumary:
 indices:
   test1-:
     - delete_indices: 
-        days: 7 # <=10 days
+        days: 10 # <=10 days
     - close_indices: 
         days: 3 # <= 3 days
     - close_replic: 
@@ -22,9 +22,9 @@ indices:
     - optimize_indices: 
         day: 1
         max_num_segments: 1 #default 1
-    - reallocate_indices: 
-        days: 2
-        rule: tag=cores8
+    - reallocate_indices: # put tag: stale to index settings
+        days: 2 # <= 2 days
+        rule: tag=stale
     - open_replic: 
         day: 1 # == 1 day
   #按月建的索引, 在34天后删除, 按天建的索引, 2天后删除
