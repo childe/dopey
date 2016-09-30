@@ -17,16 +17,20 @@ indices:
         days: 10 # <=10 days
     - close_indices: 
         days: 3 # <= 3 days
-    - close_replic: 
-        day: 1 # == 1 day
     - optimize_indices: 
         day: 1
         max_num_segments: 1 #default 1
-    - reallocate_indices: # put tag: stale to index settings
-        days: 2 # <= 2 days
-        rule: tag=stale
-    - open_replic: 
+    - update_settings:
         day: 1 # == 1 day
+        settings:
+            index:
+                routing:
+                    allocation:
+                        require:
+                            boxtype: "weak"
+                number_of_replicas: 0
+                refresh_interval: 30s
+
   #按月建的索引, 在34天后删除, 按天建的索引, 2天后删除
   .*-(?=\d{4}\.\d{2}$):
     - delete_indices:
