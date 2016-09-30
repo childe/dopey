@@ -301,7 +301,7 @@ def update_settings(esclient, indices, settings):
     for index, index_settings in indices:
         index_client.put_settings(
             index=index,
-            body=settings,
+            body=settings.get('settings',{}),
             params={'master_timeout': '300s'}
         )
 
