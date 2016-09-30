@@ -3,10 +3,9 @@
 import yaml
 import re
 import datetime
-import time
 import json
 import argparse
-from threading import Thread,Lock
+from threading import Thread, Lock
 import logging
 import logging.handlers
 import logging.config
@@ -84,6 +83,7 @@ def initlog(level=None, log="-"):
 
 logger = None
 lock = Lock()
+
 
 class Sumary(object):
 
@@ -234,11 +234,11 @@ def reallocate_indices(esclient, indices, settings):
         rule=settings.get("rule"))
 
     # while True:
-        # relo_cnt = get_relo_index_cnt(esclient)
-        # logger.info("relocation indices count: %s" % relo_cnt)
-        # if relo_cnt == 0:
-            # break
-        # time.sleep(10*60)
+    # relo_cnt = get_relo_index_cnt(esclient)
+    # logger.info("relocation indices count: %s" % relo_cnt)
+    # if relo_cnt == 0:
+    # break
+    # time.sleep(10*60)
     dopey_summary.add(u"%s reallocate 已经开始" % ",".join(indices))
 
 
@@ -259,7 +259,7 @@ def close_replic(esclient, indices, settings):
     index_client.put_settings(
         index=",".join(indices),
         body={"index.number_of_replicas": 0},
-        params = {'master_timeout':'300s'}
+        params={'master_timeout': '300s'}
     )
 
 
@@ -281,9 +281,50 @@ def open_replic(esclient, indices, settings):
         index_client.put_settings(
             index=index,
             body={"index.number_of_replicas": replic},
-            params = {'master_timeout':'300s'}
+            params={'master_timeout': '300s'}
         )
 
+
+def update_settings(esclient, indices, settings):
+    """
+    :type esclient: elasticsearch.Elasticsearch
+    :type indices: list of (indexname,index_settings)
+    :type settings: dict, index settings to be updated
+    :rtype: None
+    """
+    if not indices:
+        return
+    logger.debug("try to update index settings %s" %
+                 ','.join([e[0] for e in indices]))
+    dopey_summary.add(u"%s 更新索引配置" % ",".join([e[0] for e in indices]))
+    index_client = elasticsearch.client.IndicesClient(esclient)
+    for index, index_settings in indices:
+        index_client.put_settings(
+            index=index,
+            body=settings,
+            params={'master_timeout': '300s'}
+        )
+
+
+def revert_settings(esclient, indices, settings):
+    """
+    :type esclient: elasticsearch.Elasticsearch
+    :type indices: list of (indexname,index_settings)
+    :type settings: dict, not used
+    :rtype: None
+    """
+    if not indices:
+        return
+    logger.debug("try to update index settings %s" %
+                 ','.join([e[0] for e in indices]))
+    dopey_summary.add(u"%s 恢复索引配置" % ",".join([e[0] for e in indices]))
+    index_client = elasticsearch.client.IndicesClient(esclient)
+    for index, index_settings in indices:
+        index_client.put_settings(
+            index=index,
+            body=index_settings,
+            params={'master_timeout': '300s'}
+        )
 
 def process(esclient, all_indices, index_prefix, index_config):
     """
@@ -321,8 +362,9 @@ def process(esclient, all_indices, index_prefix, index_config):
             offset = today-date
             if indexname in [e[0] for e in actions.get("delete_indices", [])]:
                 continue
-            if "day" in settings and offset == datetime.timedelta(settings["day"]) or \
-                    "days" in settings and offset >= datetime.timedelta(settings["days"]):
+            if "day" in settings and offset == datetime.timedelta(
+                    settings["day"]) or "days" in settings and offset >= datetime.timedelta(
+                    settings["days"]):
                 actions.setdefault(action, [])
                 index_settings = index_client.get_settings(
                     index=indexname)
