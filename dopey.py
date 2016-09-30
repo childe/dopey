@@ -301,7 +301,7 @@ def update_settings(esclient, indices, settings):
     for index, index_settings in indices:
         index_client.put_settings(
             index=index,
-            body=settings.get('settings',{}),
+            body=settings.get('settings', {}),
             params={'master_timeout': '300s'}
         )
 
@@ -323,9 +323,10 @@ def revert_settings(esclient, indices, settings):
     for index, index_settings in indices:
         index_client.put_settings(
             index=index,
-            body=index_settings.get('settings',{}),
+            body=index_settings.get('settings', {}),
             params={'master_timeout': '300s'}
         )
+
 
 def process(esclient, all_indices, index_prefix, index_config):
     """
