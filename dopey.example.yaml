@@ -10,7 +10,19 @@ sumary:
       from_who: "jia.liu@corp.com"
       to_list: ["jia.liu@corp.com"]
 
+setup:
+    - update_cluster_settings:
+        transient:
+            cluster:
+                routing:
+                    rebalance.enable: none
 
+teardown:
+    - update_cluster_settings:
+        transient:
+            cluster:
+                routing:
+                    rebalance.enable: all
 indices:
   test1-:
     - delete_indices: 

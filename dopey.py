@@ -136,6 +136,18 @@ def get_relo_index_cnt(esclient):
     return int(cnt)
 
 
+def update_cluster_settings(esclient, settings):
+    """
+    :type esclient: elasticsearch.Elasticsearch
+    :type settings: cluster settings
+    :rtype: response
+    """
+    logging.info('update cluster settings: %s' % settings)
+    r = esclient.cluster.put_settings(settings, master_timeout='300s')
+    logging.debug('update cluster response: %s' % r)
+    return r
+
+
 def delete_indices(esclient, indices, settings):
     """
     :type esclient: elasticsearch.Elasticsearch
@@ -417,6 +429,10 @@ def main():
     if all_indices is False:
         raise Exception("could not get indices")
 
+    for action in config.get('setup', []):
+        settings = action.values()[0]
+        eval(action.keys()[0])(esclient, settings)
+
     process_threads = []
     for index_prefix, index_config in config.get("indices").items():
         t = Thread(
@@ -443,6 +459,10 @@ def main():
             getattr(dopey_summary, action)(**kargs)
         else:
             getattr(dopey_summary, action)()
+
+    for action in config.get('teardown', []):
+        settings = action.values()[0]
+        eval(action.keys()[0])(esclient, settings)
 
 
 if __name__ == '__main__':
