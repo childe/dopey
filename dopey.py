@@ -297,7 +297,7 @@ def revert_settings(esclient, indices, settings):
         )
 
 
-def process(esclient, all_indices, index_prefix, index_config):
+def process(esclient, all_indices, index_prefix, index_config, base_day):
     """
     :type esclient: elasticsearch.Elasticsearch
     :type all_indices: list of str
@@ -306,7 +306,6 @@ def process(esclient, all_indices, index_prefix, index_config):
     :rtype: list of indexname
     """
     index_client = elasticsearch.client.IndicesClient(esclient)
-    today = datetime.date.today()
     actions = {}
     rst = []
 
@@ -330,7 +329,7 @@ def process(esclient, all_indices, index_prefix, index_config):
         date = date.date()
         for e in index_config:
             action, settings = e.keys()[0], e.values()[0]
-            offset = today-date
+            offset = base_day-date
             if indexname in [e[0] for e in actions.get("delete_indices", [])]:
                 continue
             if "day" in settings and offset == datetime.timedelta(
@@ -376,6 +375,13 @@ def main():
         if "log" in config else args.l)
     logger = logging.getLogger("dopey")
 
+    try:
+        int(args.base_day)
+    except:
+        datetime.date.strptime(r'%Y-%m-%d')
+    else:
+        base_day =  datetime.datetime.now() + datetime.timedelta(int(args.base_day)).date()
+
     eshosts = config.get("esclient")
     logger.debug(eshosts)
     if eshosts is not None:
@@ -400,7 +406,10 @@ def main():
                 esclient,
                 all_indices,
                 index_prefix,
-                index_config))
+                index_config,
+                base_day,
+                action_filters,
+            ))
         t.start()
         process_threads.append(t)
 
