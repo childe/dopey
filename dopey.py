@@ -354,6 +354,13 @@ def process(esclient, all_indices, index_prefix, index_config, base_day):
     _dealt.extend(rst)
     return rst
 
+def _get_base_day(base_day):
+    try:
+        int(base_day)
+    except:
+        datetime.date.strptime(r'%Y-%m-%d')
+    else:
+        base_day =  datetime.datetime.now() + datetime.timedelta(int(base_day)).date()
 
 def main():
     global logger
@@ -375,12 +382,7 @@ def main():
         if "log" in config else args.l)
     logger = logging.getLogger("dopey")
 
-    try:
-        int(args.base_day)
-    except:
-        datetime.date.strptime(r'%Y-%m-%d')
-    else:
-        base_day =  datetime.datetime.now() + datetime.timedelta(int(args.base_day)).date()
+    base_day = _get_base_day(args.base_day)
 
     eshosts = config.get("esclient")
     logger.debug(eshosts)
