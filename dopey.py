@@ -183,13 +183,15 @@ def close_indices(esclient, indices, settings):
     indices = [e[0] for e in indices]
     _close.extend(indices)
     logger.debug("try to close %s" % ','.join(indices))
-    for index in indices:
-        if curator.close_indices(esclient, [index]):
-            logger.info('%s closed' % index)
-            dopey_summary.add(u'%s 已关闭' % index)
-        else:
-            logger.warn('%s closed failed' % index)
-            dopey_summary.add(u'%s 关闭失败' % index)
+    global lock
+    with lock:
+        for index in indices:
+            if curator.close_indices(esclient, [index]):
+                logger.info('%s closed' % index)
+                dopey_summary.add(u'%s 已关闭' % index)
+            else:
+                logger.warn('%s closed failed' % index)
+                dopey_summary.add(u'%s 关闭失败' % index)
 
 
 def optimize_index(esclient, index, settings):
@@ -310,12 +312,14 @@ def update_settings(esclient, indices, settings):
                  ','.join([e[0] for e in indices]))
     dopey_summary.add(u"%s 更新索引配置" % ",".join([e[0] for e in indices]))
     index_client = elasticsearch.client.IndicesClient(esclient)
-    for index, index_settings in indices:
-        index_client.put_settings(
-            index=index,
-            body=settings.get('settings', {}),
-            params={'master_timeout': '300s'}
-        )
+    global lock
+    with lock:
+        for index, index_settings in indices:
+            index_client.put_settings(
+                index=index,
+                body=settings.get('settings', {}),
+                params={'master_timeout': '300s'}
+            )
 
 
 # it NOT works, since some settings could not be upated
