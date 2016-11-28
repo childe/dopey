@@ -359,7 +359,9 @@ def process(esclient, all_indices, index_prefix, index_config):
 def main():
     global logger
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", default="dopey.yaml", help="yaml config")
+    parser.add_argument("-c", default="dopey.yaml", help="yaml config file")
+    parser.add_argument("--base-day", default="0", help="number 0(today), 1(tommorow), -1(yestoday), or string line 2011-11-11")
+    parser.add_argument("--action-filters", default="", help="comma splited. d:delete, c:close, u:update settings, f:forcemerge. leaving blank means do all the actions configuared in config file")
     parser.add_argument(
         "-l",
         default="-",
