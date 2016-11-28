@@ -230,53 +230,6 @@ def optimize_indices(esclient, indices, settings):
         optimize_index(esclient, index, settings)
 
 
-def reallocate_indices(esclient, indices, settings):
-    """
-    :type esclient: elasticsearch.Elasticsearch
-    :type indices: list of (indexname,index_settings)
-    :type settings: dict, max_num_segments setting and so on
-    :rtype: None
-    """
-    if not indices:
-        return []
-
-    indices = [e[0] for e in indices]
-    dopey_summary.add(u"%s 开始reallocate" % ",".join(indices))
-    curator.api.allocation(
-        esclient,
-        indices,
-        rule=settings.get("rule"))
-
-    # while True:
-    # relo_cnt = get_relo_index_cnt(esclient)
-    # logger.info("relocation indices count: %s" % relo_cnt)
-    # if relo_cnt == 0:
-    # break
-    # time.sleep(10*60)
-    dopey_summary.add(u"%s reallocate 已经开始" % ",".join(indices))
-
-
-def close_replic(esclient, indices, settings):
-    """
-    :type esclient: elasticsearch.Elasticsearch
-    :type indices: list of (indexname,index_settings)
-    :type settings: dict, not used
-    :rtype: None
-    """
-    if not indices:
-        return
-
-    indices = [e[0] for e in indices]
-    logger.debug("try to close replic, %s" % ','.join(indices))
-    dopey_summary.add(u"%s 关闭replic" % ",".join(indices))
-    index_client = elasticsearch.client.IndicesClient(esclient)
-    index_client.put_settings(
-        index=",".join(indices),
-        body={"index.number_of_replicas": 0},
-        params={'master_timeout': '300s'}
-    )
-
-
 def open_replic(esclient, indices, settings):
     """
     :type esclient: elasticsearch.Elasticsearch
