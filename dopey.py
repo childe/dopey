@@ -297,7 +297,7 @@ def revert_settings(esclient, indices, settings):
         )
 
 
-def process(esclient, all_indices, index_prefix, index_config, base_day):
+def process(esclient, all_indices, index_prefix, index_config, base_day, action_filters):
     """
     :type esclient: elasticsearch.Elasticsearch
     :type all_indices: list of str
@@ -345,6 +345,9 @@ def process(esclient, all_indices, index_prefix, index_config, base_day):
     for e in index_config:
         action, settings = e.keys()[0], e.values()[0]
         logger.debug(action)
+        if action not in action_filters:
+            logger.info('skip %s' % action)
+            continue
         logger.debug([e[0] for e in actions.get(action, [])])
         try:
             eval(action)(esclient, actions.get(action), settings)
@@ -361,6 +364,21 @@ def _get_base_day(base_day):
         datetime.date.strptime(r'%Y-%m-%d')
     else:
         base_day =  datetime.datetime.now() + datetime.timedelta(int(base_day)).date()
+
+def _get_action_filters(action_filters_arg):
+    action_filters_mapping = {
+        'c':'close_indices',
+        'd':'delete_indices',
+        'u':'update_settings',
+        'f':'optimize_indices',
+    }
+    if action_filters_arg == '':
+        return action_filters_mapping.keys()
+    try:
+        return [action_filters_mapping[k] for k in action_filters_arg.split(',')]
+    except:
+        raise Exception('unrecognizable action filters')
+
 
 def main():
     global logger
@@ -382,8 +400,6 @@ def main():
         if "log" in config else args.l)
     logger = logging.getLogger("dopey")
 
-    base_day = _get_base_day(args.base_day)
-
     eshosts = config.get("esclient")
     logger.debug(eshosts)
     if eshosts is not None:
@@ -399,6 +415,9 @@ def main():
     for action in config.get('setup', []):
         settings = action.values()[0]
         eval(action.keys()[0])(esclient, settings)
+
+    base_day = _get_base_day(args.base_day)
+    action_filters = _get_action_filters(args.action_filters)
 
     process_threads = []
     for index_prefix, index_config in config.get("indices").items():
