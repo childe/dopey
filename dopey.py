@@ -290,10 +290,10 @@ def update_settings(esclient, indices, settings):
     with lock:
         for index, index_settings in indices:
             origin_index_settings = index_client.get_settings(
-                index=indexname)[index]['settings']
+                index=index)[index]['settings']
             logging.info('try to update settings for %s' % index)
             if _compare_index_settings(
-                    setting.get('settings'),
+                    settings.get('settings'),
                     origin_index_settings) is True:
                 logging.info('unchanged settings, skip')
                 continue
