@@ -272,6 +272,7 @@ def _compare_index_settings(part, whole):
             return False
     return True
 
+
 def update_settings(esclient, indices, settings):
     """
     :type esclient: elasticsearch.Elasticsearch
@@ -290,7 +291,9 @@ def update_settings(esclient, indices, settings):
         for index, index_settings in indices:
             origin_index_settings = index_client.get_settings(
                 index=indexname)[index]['settings']
-            if _compare_index_settings(setting.get('settings'), origin_index_settings) is True:
+            if _compare_index_settings(
+                    setting.get('settings'),
+                    origin_index_settings) is True:
                 continue
             index_client.put_settings(
                 index=index,
@@ -321,7 +324,13 @@ def revert_settings(esclient, indices, settings):
         )
 
 
-def process(esclient, all_indices, index_prefix, index_config, base_day, action_filters):
+def process(
+    esclient,
+    all_indices,
+    index_prefix,
+    index_config,
+    base_day,
+     action_filters):
     """
     :type esclient: elasticsearch.Elasticsearch
     :type all_indices: list of str
@@ -381,25 +390,28 @@ def process(esclient, all_indices, index_prefix, index_config, base_day, action_
     _dealt.extend(rst)
     return rst
 
+
 def _get_base_day(base_day):
     try:
         int(base_day)
     except:
         datetime.date.strptime(r'%Y-%m-%d')
     else:
-        base_day =  datetime.datetime.now() + datetime.timedelta(int(base_day)).date()
+        base_day = datetime.datetime.now() + datetime.timedelta(int(base_day)).date()
+
 
 def _get_action_filters(action_filters_arg):
     action_filters_mapping = {
-        'c':'close_indices',
-        'd':'delete_indices',
-        'u':'update_settings',
-        'f':'optimize_indices',
+        'c': 'close_indices',
+        'd': 'delete_indices',
+        'u': 'update_settings',
+        'f': 'optimize_indices',
     }
     if action_filters_arg == '':
         return action_filters_mapping.keys()
     try:
-        return [action_filters_mapping[k] for k in action_filters_arg.split(',')]
+        return [action_filters_mapping[k]
+                for k in action_filters_arg.split(',')]
     except:
         raise Exception('unrecognizable action filters')
 
@@ -408,8 +420,13 @@ def main():
     global logger
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", default="dopey.yaml", help="yaml config file")
-    parser.add_argument("--base-day", default="0", help="number 0(today), 1(tommorow), -1(yestoday), or string line 2011-11-11")
-    parser.add_argument("--action-filters", default="", help="comma splited. d:delete, c:close, u:update settings, f:forcemerge. leaving blank means do all the actions configuared in config file")
+    parser.add_argument(
+        "--base-day", default="0",
+        help="number 0(today), 1(tommorow), -1(yestoday), or string line 2011-11-11")
+    parser.add_argument(
+        "--action-filters",
+        default="",
+     help="comma splited. d:delete, c:close, u:update settings, f:forcemerge. leaving blank means do all the actions configuared in config file")
     parser.add_argument(
         "-l",
         default="-",
