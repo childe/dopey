@@ -282,7 +282,7 @@ def update_settings(esclient, indices, settings):
     """
     if not indices:
         return
-    logger.debug("try to update index settings %s" %
+    logger.info("try to update index settings %s" %
                  ','.join([e[0] for e in indices]))
     dopey_summary.add(u"%s 更新索引配置" % ",".join([e[0] for e in indices]))
     index_client = elasticsearch.client.IndicesClient(esclient)
@@ -291,15 +291,18 @@ def update_settings(esclient, indices, settings):
         for index, index_settings in indices:
             origin_index_settings = index_client.get_settings(
                 index=indexname)[index]['settings']
+            logging.info('try to update settings for %s' % index)
             if _compare_index_settings(
                     setting.get('settings'),
                     origin_index_settings) is True:
+                logging.info('unchanged settings, skip')
                 continue
             index_client.put_settings(
                 index=index,
                 body=settings.get('settings', {}),
                 params={'master_timeout': '300s'}
             )
+            logging.info('finished to update settings for %s' % index)
 
 
 # it NOT works, since some settings could not be upated
