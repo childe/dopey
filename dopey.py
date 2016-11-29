@@ -398,9 +398,9 @@ def _get_base_day(base_day):
     try:
         int(base_day)
     except:
-        datetime.date.strptime(r'%Y-%m-%d')
+        return datetime.date.strptime(r'%Y-%m-%d')
     else:
-        base_day = datetime.datetime.now() + datetime.timedelta(int(base_day)).date()
+        return (datetime.datetime.now() + datetime.timedelta(int(base_day))).date()
 
 
 def _get_action_filters(action_filters_arg):
@@ -461,6 +461,7 @@ def main():
         eval(action.keys()[0])(esclient, settings)
 
     base_day = _get_base_day(args.base_day)
+    logging.info('base day is %s' % base_day)
     action_filters = _get_action_filters(args.action_filters)
 
     process_threads = []
