@@ -411,7 +411,7 @@ def _get_action_filters(action_filters_arg):
         'f': 'optimize_indices',
     }
     if action_filters_arg == '':
-        return action_filters_mapping.keys()
+        return action_filters_mapping.values()
     try:
         return [action_filters_mapping[k]
                 for k in action_filters_arg.split(',')]
