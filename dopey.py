@@ -252,6 +252,26 @@ def open_replic(esclient, indices, settings):
         )
 
 
+def _compare_index_settings(part, whole):
+    '''
+    return True if part is part of whole
+    type part: dict or else
+    type whole: dict or else
+    rtype: boolean
+    >>> whole={"index":{"routing":{"allocation":{"include":{"group":"4,5"},"total_shards_per_node":"2"}},"refresh_interval":"60s","number_of_shards":"20","store":{"type":"niofs"},"number_of_replicas":"1"}}
+    >>> part={"index":{"routing":{"allocation":{"include":{"group":"4,5"}}}}}
+    >>> _compare_index_settings(part, whole)
+    >>> part={"index":{"routing":{"allocation":{"include":{"group":"5"}}}}}
+    >>> _compare_index_settings(part, whole)
+    False
+    '''
+    if not isinstance(part, dict):
+        return part == whole
+    for k,v in part.items():
+        if _compare_index_settings(v, whole.get(k)) is False:
+            return False
+    return True
+
 def update_settings(esclient, indices, settings):
     """
     :type esclient: elasticsearch.Elasticsearch
@@ -268,6 +288,10 @@ def update_settings(esclient, indices, settings):
     global lock
     with lock:
         for index, index_settings in indices:
+            origin_index_settings = index_client.get_settings(
+                index=indexname)[index]['settings']
+            if _compare_index_settings(setting.get('settings'), origin_index_settings) is True:
+                continue
             index_client.put_settings(
                 index=index,
                 body=settings.get('settings', {}),
