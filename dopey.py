@@ -398,7 +398,7 @@ def _get_base_day(base_day):
     try:
         int(base_day)
     except:
-        return datetime.date.strptime(r'%Y-%m-%d')
+        return datetime.datetime.strptime(base_day, r'%Y-%m-%d').date()
     else:
         return (datetime.datetime.now() + datetime.timedelta(int(base_day))).date()
 
