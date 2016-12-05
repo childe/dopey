@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 import yaml
 import re
 import datetime
@@ -129,6 +130,7 @@ _delete = []
 _close = []
 _optimize = []
 _dealt = []
+_update_settings = []
 
 
 def get_relo_index_cnt(esclient):
@@ -267,7 +269,7 @@ def _compare_index_settings(part, whole):
     '''
     if not isinstance(part, dict):
         return part == whole
-    for k,v in part.items():
+    for k, v in part.items():
         if _compare_index_settings(v, whole.get(k)) is False:
             return False
     return True
@@ -283,8 +285,9 @@ def update_settings(esclient, indices, settings):
     if not indices:
         return
     logger.info("try to update index settings %s" %
-                 ','.join([e[0] for e in indices]))
+                ','.join([e[0] for e in indices]))
     dopey_summary.add(u"%s 更新索引配置" % ",".join([e[0] for e in indices]))
+    _update_settings.extend([e[0] for e in indices])
     index_client = elasticsearch.client.IndicesClient(esclient)
     global lock
     with lock:
@@ -400,7 +403,10 @@ def _get_base_day(base_day):
     except:
         return datetime.datetime.strptime(base_day, r'%Y-%m-%d').date()
     else:
-        return (datetime.datetime.now() + datetime.timedelta(int(base_day))).date()
+        return (
+            datetime.datetime.now() +
+            datetime.timedelta(
+                int(base_day))).date()
 
 
 def _get_action_filters(action_filters_arg):
@@ -485,8 +491,8 @@ def main():
     not_dealt = list(set(all_indices).difference(_dealt))
     dopey_summary.add(
         json.dumps(
-            {"not_dealt": not_dealt, "delete": _delete, "close": _close,
-             "optimize": _optimize}, indent=2))
+            {u"未处理": not_dealt, u"删除": _delete, u"关闭": _close,
+             u"优化": _optimize, u"更新索配置": _update_settings}, indent=2))
     sumary_config = config.get("sumary")
     for action, kargs in sumary_config.items():
         if kargs:
