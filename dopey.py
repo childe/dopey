@@ -491,8 +491,8 @@ def main():
     not_dealt = list(set(all_indices).difference(_dealt))
     dopey_summary.add(
         u'未处理:\n{}\n删除:\n{}\n关闭:\n{}\n优化:{}\n更新索配置:{}'.format(
-            not_dealt.join(','), _delete.join(','), _close.join(','),
-             _optimize.join(','),  _update_settings.join(',')))
+            ','.join(not_dealt), ','.join(_delete), ','.join(_close),
+             ','.join(_optimize),  ','.join(_update_settings)))
     sumary_config = config.get("sumary")
     for action, kargs in sumary_config.items():
         if kargs:
