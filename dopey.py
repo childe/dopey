@@ -145,9 +145,13 @@ def update_cluster_settings(esclient, settings):
     :rtype: response
     """
     logging.info('update cluster settings: %s' % settings)
-    r = esclient.cluster.put_settings(settings, master_timeout='300s')
-    logging.debug('update cluster response: %s' % r)
-    return r
+    try:
+        r = esclient.cluster.put_settings(settings, master_timeout='300s')
+        logging.debug('update cluster response: %s' % r)
+        return r
+    except Exception as e:
+        logging.error('failed to update cluster settings. %s' % e)
+        return False
 
 
 def delete_indices(esclient, indices, settings):
@@ -496,17 +500,17 @@ def main():
             '\n'.join(sorted(_close)),
             '\n'.join(sorted(_optimize)),
             '\n'.join(sorted(_update_settings))))
+
+    for action in config.get('teardown', []):
+        settings = action.values()[0]
+        eval(action.keys()[0])(esclient, settings)
+
     sumary_config = config.get("sumary")
     for action, kargs in sumary_config.items():
         if kargs:
             getattr(dopey_summary, action)(**kargs)
         else:
             getattr(dopey_summary, action)()
-
-    for action in config.get('teardown', []):
-        settings = action.values()[0]
-        eval(action.keys()[0])(esclient, settings)
-
 
 if __name__ == '__main__':
     main()
