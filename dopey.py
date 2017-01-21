@@ -4,7 +4,6 @@
 import yaml
 import re
 import datetime
-import json
 import argparse
 from threading import Thread, Lock
 import logging
@@ -271,6 +270,12 @@ def _compare_index_settings(part, whole):
     >>> _compare_index_settings(part, whole)
     False
     '''
+    if part is None and whole is None:
+        return True
+    if part is None or whole is None:
+        return False
+    if type(part) != type(whole):
+        return False
     if not isinstance(part, dict):
         return part == whole
     for k, v in part.items():
