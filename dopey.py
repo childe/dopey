@@ -164,9 +164,9 @@ def delete_indices(esclient, indices, settings):
         return
     indices = [e[0] for e in indices]
     _delete.extend(indices)
-    logger.debug("try to delete %s" % ','.join(indices))
     global lock
     with lock:
+        logger.debug("try to delete %s" % ','.join(indices))
         for index in indices:
             if curator.delete_indices(esclient, [index], master_timeout='300s'):
                 logger.info('%s deleted' % index)
@@ -187,9 +187,9 @@ def close_indices(esclient, indices, settings):
         return
     indices = [e[0] for e in indices]
     _close.extend(indices)
-    logger.debug("try to close %s" % ','.join(indices))
     global lock
     with lock:
+        logger.debug("try to close %s" % ','.join(indices))
         for index in indices:
             if curator.close_indices(esclient, [index]):
                 logger.info('%s closed' % index)
@@ -293,13 +293,13 @@ def update_settings(esclient, indices, settings):
     """
     if not indices:
         return
-    logger.info("try to update index settings %s" %
-                ','.join([e[0] for e in indices]))
-    dopey_summary.add(u"%s 更新索引配置" % ",".join([e[0] for e in indices]))
     _update_settings.extend([e[0] for e in indices])
     index_client = elasticsearch.client.IndicesClient(esclient)
     global lock
     with lock:
+        logger.info("try to update index settings %s" %
+                    ','.join([e[0] for e in indices]))
+        dopey_summary.add(u"%s 更新索引配置" % ",".join([e[0] for e in indices]))
         for index, index_settings in indices:
             origin_index_settings = index_client.get_settings(
                 index=index)[index]['settings']
