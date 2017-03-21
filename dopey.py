@@ -206,7 +206,7 @@ def optimize_index(esclient, index, settings):
                 esclient,
                 index,
                 max_num_segments=settings.get("max_num_segments", 1),
-                request_timeout=18 *
+                request_timeout=5 *
                 3600):
             logger.info('%s optimized' % index)
             dopey_summary.add(u"%s optimize 完成" % index)
@@ -274,7 +274,7 @@ def _compare_index_settings(part, whole):
         return True
     if part is None or whole is None:
         return False
-    if type(part) != type(whole):
+    if not isinstance(part, type(whole)):
         return False
     if not isinstance(part, dict):
         return part == whole
