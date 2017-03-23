@@ -273,14 +273,15 @@ def _compare_index_settings(part, whole):
     if part is None and whole is None:
         return True
     if part is None or whole is None:
-        return False
+        return (part, whole)
     if not isinstance(part, type(whole)):
-        return False
+        return (part, whole)
     if not isinstance(part, dict):
         return part == whole
     for k, v in part.items():
-        if _compare_index_settings(v, whole.get(k)) is False:
-            return False
+        r = _compare_index_settings(v, whole.get(k))
+        if r is not True:
+            return r
     return True
 
 
@@ -304,11 +305,13 @@ def update_settings(esclient, indices, settings):
             origin_index_settings = index_client.get_settings(
                 index=index)[index]['settings']
             logging.info('try to update settings for %s' % index)
-            if _compare_index_settings(
-                    settings.get('settings'),
-                    origin_index_settings) is True:
+            if_same = _compare_index_settings(
+                settings.get('settings'), origin_index_settings)
+            if if_same is True:
                 logging.info('unchanged settings, skip')
                 continue
+            else:
+                logging.info('settings need to be changed. %s' % if_same)
             index_client.put_settings(
                 index=index,
                 body=settings.get('settings', {}),
