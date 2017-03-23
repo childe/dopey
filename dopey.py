@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import yaml
+import json
 import re
 import datetime
 import argparse
@@ -270,6 +271,8 @@ def _compare_index_settings(part, whole):
     >>> _compare_index_settings(part, whole)
     False
     '''
+    if part == whole:
+        return True
     if part is None and whole is None:
         return True
     if part is None or whole is None:
@@ -311,7 +314,9 @@ def update_settings(esclient, indices, settings):
                 logging.info('unchanged settings, skip')
                 continue
             else:
-                logging.info('settings need to be changed. %s %s' % if_same)
+                logging.info(
+                    'settings need to be changed. %s' %
+                    json.dumps(if_same))
             index_client.put_settings(
                 index=index,
                 body=settings.get('settings', {}),
