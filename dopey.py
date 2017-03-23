@@ -311,7 +311,7 @@ def update_settings(esclient, indices, settings):
                 logging.info('unchanged settings, skip')
                 continue
             else:
-                logging.info('settings need to be changed. %s' % if_same)
+                logging.info('settings need to be changed. %s %s' % if_same)
             index_client.put_settings(
                 index=index,
                 body=settings.get('settings', {}),
