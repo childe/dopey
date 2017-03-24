@@ -2,20 +2,17 @@
 # -*- coding: utf-8 -*-
 
 import yaml
+import elasticsearch
+import curator
+
 import json
 import re
 import datetime
 import argparse
 from threading import Thread, Lock
-import logging
-import logging.handlers
-import logging.config
 import smtplib
 from email.mime.text import MIMEText
-import elasticsearch
-import curator
-
-
+import logging.handlers
 import logging
 import logging.config
 
