@@ -3,7 +3,6 @@
 
 import yaml
 import elasticsearch
-import curator
 
 import json
 import re
@@ -15,6 +14,8 @@ from email.mime.text import MIMEText
 import logging.handlers
 import logging
 import logging.config
+
+config = {}
 
 
 def initlog(level=None, log="-"):
@@ -130,22 +131,43 @@ _dealt = []
 _update_settings = []
 
 
+def get_indices():
+    global config
+    all_indices = []
+    eshost = config['eshost']
+    url = '{}/_cat/indices?h=i'.format(eshost)
+    logging.debug(u'get all indices from {}'.format(url))
+    try:
+        r = requests.get(url)
+        for i in r.text.split():
+            i = i.strip()
+            if i == '':
+                continue
+            all_indices.append(i)
+        return all_indices
+    except:
+        return False
+
+
 def get_relo_index_cnt(esclient):
     cnt = elasticsearch.client.CatClient(esclient).health(h="relo")
     return int(cnt)
 
 
-def update_cluster_settings(esclient, settings):
+def update_cluster_settings(settings):
     """
-    :type esclient: elasticsearch.Elasticsearch
     :type settings: cluster settings
     :rtype: response
     """
+    global config
     logging.info('update cluster settings: %s' % settings)
     try:
-        r = esclient.cluster.put_settings(settings, master_timeout='300s')
-        logging.debug('update cluster response: %s' % r)
-        return r
+        url = u'{}/_cluster/settings'.format(config['eshost'])
+        logging.debug(u'update cluster by {}: {}'.format(url, settings))
+        r = requests.put(
+            url, data=json.dumps(settings), params={
+                master_timeout: '300s'})
+        return r.ok
     except Exception as e:
         logging.error('failed to update cluster settings. %s' % e)
         return False
@@ -167,6 +189,7 @@ def delete_indices(esclient, indices, settings):
         logger.debug("try to delete %s" % ','.join(indices))
         for index in indices:
             if curator.delete_indices(esclient, [index], master_timeout='300s'):
+            r = requests.delete(index, timeout=300)
                 logger.info('%s deleted' % index)
                 dopey_summary.add(u'%s 己删除' % index)
             else:
@@ -457,6 +480,7 @@ def main():
     parser.add_argument("--level", default="info")
     args = parser.parse_args()
 
+    global config
     config = yaml.load(open(args.c))
 
     initlog(
@@ -464,21 +488,14 @@ def main():
         if "log" in config else args.l)
     logger = logging.getLogger("dopey")
 
-    eshosts = config.get("esclient")
-    logger.debug(eshosts)
-    if eshosts is not None:
-        esclient = elasticsearch.Elasticsearch(eshosts, timeout=300)
-    else:
-        esclient = elasticsearch.Elasticsearch(timeout=300)
-
-    all_indices = curator.get_indices(esclient)
-    logger.debug("all_indices: {}".format(all_indices))
+    all_indices = get_indices()
+    logger.debug(u"all_indices: {}".format(all_indices))
     if all_indices is False:
         raise Exception("could not get indices")
 
     for action in config.get('setup', []):
         settings = action.values()[0]
-        eval(action.keys()[0])(esclient, settings)
+        eval(action.keys()[0])(settings)
 
     base_day = _get_base_day(args.base_day)
     logging.info('base day is %s' % base_day)
