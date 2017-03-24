@@ -245,7 +245,7 @@ def optimize_index(index, settings):
 
     dopey_summary.add(u"%s optimize 开始" % index)
     try:
-        url = u"{}/{}/_frocemerge".format(config["eshost"], index)
+        url = u"{}/{}/_forcemerge".format(config["eshost"], index)
         logging.info(u"optimize {} by {}".format(index, url))
 
         r = requests.post(url, params={"max_num_segments": 1}, timeout=5 * 3600)
