@@ -346,28 +346,6 @@ def update_settings(indices, settings):
                         index, str(e)))
 
 
-# it NOT works, since some settings could not be upated
-def revert_settings(esclient, indices, settings):
-    """
-    :type esclient: elasticsearch.Elasticsearch
-    :type indices: list of (indexname,index_settings)
-    :type settings: dict, not used
-    :rtype: None
-    """
-    if not indices:
-        return
-    logger.debug("try to update index settings %s" %
-                 ",".join([e[0] for e in indices]))
-    dopey_summary.add(u"%s 恢复索引配置" % ",".join([e[0] for e in indices]))
-    index_client = elasticsearch.client.IndicesClient(esclient)
-    for index, index_settings in indices:
-        index_client.put_settings(
-            index=index,
-            body=index_settings.get("settings", {}),
-            params={"master_timeout": "300s"}
-        )
-
-
 def process(
     esclient,
     all_indices,
