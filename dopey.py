@@ -292,41 +292,58 @@ def _compare_index_settings(part, whole):
     return True
 
 
-def update_settings(esclient, indices, settings):
+def update_settings(indices, settings):
     """
-    :type esclient: elasticsearch.Elasticsearch
     :type indices: list of (indexname,index_settings)
     :type settings: dict, index settings to be updated
     :rtype: None
     """
     if not indices:
         return
+
+    global config
+
     _update_settings.extend([e[0] for e in indices])
-    index_client = elasticsearch.client.IndicesClient(esclient)
+
     global lock
     with lock:
-        logger.info("try to update index settings %s" %
+        logger.info(u"try to update index settings %s" %
                     ",".join([e[0] for e in indices]))
         dopey_summary.add(u"%s 更新索引配置" % ",".join([e[0] for e in indices]))
+
         for index, index_settings in indices:
-            origin_index_settings = index_client.get_settings(
-                index=index)[index]["settings"]
-            logging.info("try to update settings for %s" % index)
-            if_same = _compare_index_settings(
-                settings.get("settings"), origin_index_settings)
-            if if_same is True:
-                logging.info("unchanged settings, skip")
-                continue
-            else:
+            try:
+                url = u"{}/{}/_settings".format(config["eshost"], index)
+                logging.info(u"get {} settinsg by".format(index, url))
+
+                origin_index_settings = requests.get(
+                    url).json()[index]['settings']
+
+                if_same = _compare_index_settings(
+                    settings.get("settings"), origin_index_settings)
+                if if_same is True:
+                    logging.info(u"unchanged settings, skip")
+                    continue
+                else:
+                    logging.info(
+                        u"settings need to be changed. %s" %
+                        json.dumps(if_same))
+
+                logging.info(u"try to update settings for %s" % index)
+
+                r = requests.put(
+                    url, data=json.dumps(
+                        settings.get(
+                            "settings", {})), params={
+                        "master_timeout": "300s"})
+                if r.ok:
+                    logging.info(u"finished to update settings for %s" % index)
+                else:
+                    logging.info(u"failed to update settings for %s" % index)
+            except Exception as e:
                 logging.info(
-                    "settings need to be changed. %s" %
-                    json.dumps(if_same))
-            index_client.put_settings(
-                index=index,
-                body=settings.get("settings", {}),
-                params={"master_timeout": "300s"}
-            )
-            logging.info("finished to update settings for %s" % index)
+                    u"failed to update settings for {}: {}".format(
+                        index, str(e)))
 
 
 # it NOT works, since some settings could not be upated
