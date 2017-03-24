@@ -191,26 +191,34 @@ def delete_indices(indices, settings):
                 dopey_summary.add(u"%s 删除失败" % index)
 
 
-def close_indices(esclient, indices, settings):
+def close_indices(indices, settings):
     """
-    :type esclient: elasticsearch.Elasticsearch
     :type indices: list of (indexname,index_settings)
     :type settings: dict, not used
     :rtype: None
     """
     if not indices:
         return
+
+    global config
+
     indices = [e[0] for e in indices]
     _close.extend(indices)
+
     global lock
     with lock:
-        logger.debug("try to close %s" % ",".join(indices))
+        logger.debug(u"try to close %s" % ",".join(indices))
         for index in indices:
-            if curator.close_indices(esclient, [index]):
-                logger.info("%s closed" % index)
+            url = u"{}/{}/_close".format(config['eshost'], index)
+            logging.info(u"close {} by {}".format(index, url))
+
+            r = requests.post(url)
+
+            if r.ok:
+                logger.info(u"%s closed" % index)
                 dopey_summary.add(u"%s 已关闭" % index)
             else:
-                logger.warn("%s closed failed" % index)
+                logger.warn(u"%s closed failed" % index)
                 dopey_summary.add(u"%s 关闭失败" % index)
 
 
