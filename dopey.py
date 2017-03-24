@@ -27,8 +27,8 @@ def initlog(level=None, log="-"):
     class MyFormatter(logging.Formatter):
 
         def format(self, record):
-            dformatter = '[%(asctime)s] %(levelname)s %(thread)d %(name)s %(pathname)s %(lineno)d - %(message)s'
-            formatter = '[%(asctime)s] %(levelname)s %(thread)d %(name)s %(message)s'
+            dformatter = "[%(asctime)s] %(levelname)s %(thread)d %(name)s %(pathname)s %(lineno)d - %(message)s"
+            formatter = "[%(asctime)s] %(levelname)s %(thread)d %(name)s %(message)s"
             if record.levelno <= logging.DEBUG:
                 self._fmt = dformatter
             else:
@@ -40,7 +40,7 @@ def initlog(level=None, log="-"):
         "disable_existing_loggers": True,
         "formatters": {
             "custom": {
-                '()': MyFormatter
+                "()": MyFormatter
             },
             "simple": {
                 "format": "[%(asctime)s] %(levelname)s %(thread)d %(name)s %(message)s"
@@ -51,9 +51,9 @@ def initlog(level=None, log="-"):
         },
         "handlers": {
         },
-        'root': {
-            'level': level,
-            'handlers': ['console']
+        "root": {
+            "level": level,
+            "handlers": ["console"]
         }
     }
     console = {
@@ -92,27 +92,27 @@ class Sumary(object):
 
     def add(self, record):
         self.records.append(
-            '[%s] %s' %
-            (datetime.datetime.now().strftime('%Y.%m.%d %H:%M:%S'), record))
+            "[%s] %s" %
+            (datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S"), record))
 
     @property
     def sumary(self):
-        return '\n'.join(self.records)
+        return "\n".join(self.records)
 
     def prints(self):
-        print self.sumary.encode('utf-8')
+        print self.sumary.encode("utf-8")
 
     def log(self):
         logging.getLogger("DopeySumary").info(self.sumary)
 
     def mail(self, mail_host, from_who, to_list, sub="dopey summary"):
         content = self.sumary
-        content = content.encode('utf-8')
+        content = content.encode("utf-8")
 
         msg = MIMEText(content)
-        msg['Subject'] = sub
-        msg['From'] = from_who
-        msg['To'] = ";".join(to_list)
+        msg["Subject"] = sub
+        msg["From"] = from_who
+        msg["To"] = ";".join(to_list)
         try:
             s = smtplib.SMTP()
             s.connect(mail_host)
@@ -134,14 +134,14 @@ _update_settings = []
 def get_indices():
     global config
     all_indices = []
-    eshost = config['eshost']
-    url = '{}/_cat/indices?h=i'.format(eshost)
-    logging.debug(u'get all indices from {}'.format(url))
+    eshost = config["eshost"]
+    url = "{}/_cat/indices?h=i".format(eshost)
+    logging.debug(u"get all indices from {}".format(url))
     try:
         r = requests.get(url)
         for i in r.text.split():
             i = i.strip()
-            if i == '':
+            if i == "":
                 continue
             all_indices.append(i)
         return all_indices
@@ -155,16 +155,16 @@ def update_cluster_settings(settings):
     :rtype: response
     """
     global config
-    logging.info('update cluster settings: %s' % settings)
+    logging.info("update cluster settings: %s" % settings)
     try:
-        url = u'{}/_cluster/settings'.format(config['eshost'])
-        logging.debug(u'update cluster by {}: {}'.format(url, settings))
+        url = u"{}/_cluster/settings".format(config["eshost"])
+        logging.debug(u"update cluster by {}: {}".format(url, settings))
         r = requests.put(
             url, data=json.dumps(settings), params={
-                master_timeout: '300s'})
+                "master_timeout": "300s"})
         return r.ok
     except Exception as e:
-        logging.error('failed to update cluster settings. %s' % e)
+        logging.error("failed to update cluster settings. %s" % e)
         return False
 
 
@@ -180,15 +180,15 @@ def delete_indices(indices, settings):
     _delete.extend(indices)
     global lock
     with lock:
-        logger.debug(u"try to delete %s" % ','.join(indices))
+        logger.debug(u"try to delete %s" % ",".join(indices))
         for index in indices:
-            r = requests.delete(index, timeout=300, params={'master_timeout':'300s'})
+            r = requests.delete(index, timeout=300, params={"master_timeout":"300s"})
             if r.ok:
-                logger.info(u'%s deleted' % index)
-                dopey_summary.add(u'%s 己删除' % index)
+                logger.info(u"%s deleted" % index)
+                dopey_summary.add(u"%s 己删除" % index)
             else:
-                logger.warn(u'%s deleted failed' % index)
-                dopey_summary.add(u'%s 删除失败' % index)
+                logger.warn(u"%s deleted failed" % index)
+                dopey_summary.add(u"%s 删除失败" % index)
 
 
 def close_indices(esclient, indices, settings):
@@ -204,14 +204,14 @@ def close_indices(esclient, indices, settings):
     _close.extend(indices)
     global lock
     with lock:
-        logger.debug("try to close %s" % ','.join(indices))
+        logger.debug("try to close %s" % ",".join(indices))
         for index in indices:
             if curator.close_indices(esclient, [index]):
-                logger.info('%s closed' % index)
-                dopey_summary.add(u'%s 已关闭' % index)
+                logger.info("%s closed" % index)
+                dopey_summary.add(u"%s 已关闭" % index)
             else:
-                logger.warn('%s closed failed' % index)
-                dopey_summary.add(u'%s 关闭失败' % index)
+                logger.warn("%s closed failed" % index)
+                dopey_summary.add(u"%s 关闭失败" % index)
 
 
 def optimize_index(esclient, index, settings):
@@ -223,7 +223,7 @@ def optimize_index(esclient, index, settings):
                 max_num_segments=settings.get("max_num_segments", 1),
                 request_timeout=5 *
                 3600):
-            logger.info('%s optimized' % index)
+            logger.info("%s optimized" % index)
             dopey_summary.add(u"%s optimize 完成" % index)
         else:
             raise
@@ -244,7 +244,7 @@ def optimize_indices(esclient, indices, settings):
 
     indices = [e[0] for e in indices]
     _optimize.extend(indices)
-    logger.debug("try to optimize %s" % ','.join(indices))
+    logger.debug("try to optimize %s" % ",".join(indices))
 
     for index in indices:
         optimize_index(esclient, index, settings)
@@ -259,21 +259,21 @@ def open_replic(esclient, indices, settings):
     """
     if not indices:
         return
-    logger.debug("try to open replic, %s" % ','.join([e[0] for e in indices]))
+    logger.debug("try to open replic, %s" % ",".join([e[0] for e in indices]))
     dopey_summary.add(u"%s 打开replic" % ",".join([e[0] for e in indices]))
     index_client = elasticsearch.client.IndicesClient(esclient)
     for index, index_settings in indices:
-        replic = index_settings[index]['settings'][
-            'index']['number_of_replicas']
+        replic = index_settings[index]["settings"][
+            "index"]["number_of_replicas"]
         index_client.put_settings(
             index=index,
             body={"index.number_of_replicas": replic},
-            params={'master_timeout': '300s'}
+            params={"master_timeout": "300s"}
         )
 
 
 def _compare_index_settings(part, whole):
-    '''
+    """
     return True if part is part of whole
     type part: dict or else
     type whole: dict or else
@@ -284,7 +284,7 @@ def _compare_index_settings(part, whole):
     >>> part={"index":{"routing":{"allocation":{"include":{"group":"5"}}}}}
     >>> _compare_index_settings(part, whole)
     False
-    '''
+    """
     if part == whole:
         return True
     if part is None and whole is None:
@@ -316,27 +316,27 @@ def update_settings(esclient, indices, settings):
     global lock
     with lock:
         logger.info("try to update index settings %s" %
-                    ','.join([e[0] for e in indices]))
+                    ",".join([e[0] for e in indices]))
         dopey_summary.add(u"%s 更新索引配置" % ",".join([e[0] for e in indices]))
         for index, index_settings in indices:
             origin_index_settings = index_client.get_settings(
-                index=index)[index]['settings']
-            logging.info('try to update settings for %s' % index)
+                index=index)[index]["settings"]
+            logging.info("try to update settings for %s" % index)
             if_same = _compare_index_settings(
-                settings.get('settings'), origin_index_settings)
+                settings.get("settings"), origin_index_settings)
             if if_same is True:
-                logging.info('unchanged settings, skip')
+                logging.info("unchanged settings, skip")
                 continue
             else:
                 logging.info(
-                    'settings need to be changed. %s' %
+                    "settings need to be changed. %s" %
                     json.dumps(if_same))
             index_client.put_settings(
                 index=index,
-                body=settings.get('settings', {}),
-                params={'master_timeout': '300s'}
+                body=settings.get("settings", {}),
+                params={"master_timeout": "300s"}
             )
-            logging.info('finished to update settings for %s' % index)
+            logging.info("finished to update settings for %s" % index)
 
 
 # it NOT works, since some settings could not be upated
@@ -350,14 +350,14 @@ def revert_settings(esclient, indices, settings):
     if not indices:
         return
     logger.debug("try to update index settings %s" %
-                 ','.join([e[0] for e in indices]))
+                 ",".join([e[0] for e in indices]))
     dopey_summary.add(u"%s 恢复索引配置" % ",".join([e[0] for e in indices]))
     index_client = elasticsearch.client.IndicesClient(esclient)
     for index, index_settings in indices:
         index_client.put_settings(
             index=index,
-            body=index_settings.get('settings', {}),
-            params={'master_timeout': '300s'}
+            body=index_settings.get("settings", {}),
+            params={"master_timeout": "300s"}
         )
 
 
@@ -381,17 +381,17 @@ def process(
 
     for indexname in all_indices:
         r = re.findall(
-            r'^%s(\d{4}\.\d{2}\.\d{2})$' % index_prefix,
+            r"^%s(\d{4}\.\d{2}\.\d{2})$" % index_prefix,
             indexname)
         if r:
-            date = datetime.datetime.strptime(r[0], '%Y.%m.%d')
+            date = datetime.datetime.strptime(r[0], "%Y.%m.%d")
             rst.append(indexname)
         else:
             r = re.findall(
-                r'^%s(\d{4}\.\d{2})$' % index_prefix,
+                r"^%s(\d{4}\.\d{2})$" % index_prefix,
                 indexname)
             if r:
-                date = datetime.datetime.strptime(r[0], '%Y.%m')
+                date = datetime.datetime.strptime(r[0], "%Y.%m")
                 rst.append(indexname)
             else:
                 continue
@@ -416,13 +416,13 @@ def process(
         action, settings = e.keys()[0], e.values()[0]
         logger.debug(action)
         if action not in action_filters:
-            logger.info('skip %s' % action)
+            logger.info("skip %s" % action)
             continue
         logger.debug([e[0] for e in actions.get(action, [])])
         try:
             eval(action)(esclient, actions.get(action), settings)
         except Exception as e:
-            logging.warn('%s action failed: %s' % (action, e))
+            logging.warn("%s action failed: %s" % (action, e))
 
     _dealt.extend(rst)
     return rst
@@ -432,7 +432,7 @@ def _get_base_day(base_day):
     try:
         int(base_day)
     except:
-        return datetime.datetime.strptime(base_day, r'%Y-%m-%d').date()
+        return datetime.datetime.strptime(base_day, r"%Y-%m-%d").date()
     else:
         return (
             datetime.datetime.now() +
@@ -442,18 +442,18 @@ def _get_base_day(base_day):
 
 def _get_action_filters(action_filters_arg):
     action_filters_mapping = {
-        'c': 'close_indices',
-        'd': 'delete_indices',
-        'u': 'update_settings',
-        'f': 'optimize_indices',
+        "c": "close_indices",
+        "d": "delete_indices",
+        "u": "update_settings",
+        "f": "optimize_indices",
     }
-    if action_filters_arg == '':
+    if action_filters_arg == "":
         return action_filters_mapping.values()
     try:
         return [action_filters_mapping[k]
-                for k in action_filters_arg.split(',')]
+                for k in action_filters_arg.split(",")]
     except:
-        raise Exception('unrecognizable action filters')
+        raise Exception("unrecognizable action filters")
 
 
 def main():
@@ -487,12 +487,12 @@ def main():
     if all_indices is False:
         raise Exception("could not get indices")
 
-    for action in config.get('setup', []):
+    for action in config.get("setup", []):
         settings = action.values()[0]
         eval(action.keys()[0])(settings)
 
     base_day = _get_base_day(args.base_day)
-    logging.info('base day is %s' % base_day)
+    logging.info("base day is %s" % base_day)
     action_filters = _get_action_filters(args.action_filters)
 
     process_threads = []
@@ -515,14 +515,14 @@ def main():
 
     not_dealt = list(set(all_indices).difference(_dealt))
     dopey_summary.add(
-        u'未处理:\n{}\n删除:\n{}\n关闭:\n{}\n优化:{}\n更新索配置:{}'.format(
-            '\n'.join(sorted(not_dealt)),
-            '\n'.join(sorted(_delete)),
-            '\n'.join(sorted(_close)),
-            '\n'.join(sorted(_optimize)),
-            '\n'.join(sorted(_update_settings))))
+        u"未处理:\n{}\n删除:\n{}\n关闭:\n{}\n优化:{}\n更新索配置:{}".format(
+            "\n".join(sorted(not_dealt)),
+            "\n".join(sorted(_delete)),
+            "\n".join(sorted(_close)),
+            "\n".join(sorted(_optimize)),
+            "\n".join(sorted(_update_settings))))
 
-    for action in config.get('teardown', []):
+    for action in config.get("teardown", []):
         settings = action.values()[0]
         eval(action.keys()[0])(esclient, settings)
 
@@ -533,5 +533,5 @@ def main():
         else:
             getattr(dopey_summary, action)()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
