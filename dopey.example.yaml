@@ -1,7 +1,5 @@
 #log: dopey.log
-esclient:
-    - http://user:secret@localhost:9200/
-    - https://user:secret@other_host:443/production
+eshost: http://user:secret@localhost:9200/
 sumary:
     log: null
     prints: null
@@ -40,8 +38,8 @@ indices:
                     allocation:
                         require:
                             boxtype: "weak"
-                number_of_replicas: 0
-                refresh_interval: 30s
+                number_of_replicas: "1"
+                refresh_interval: "30s"
 
   #按月建的索引, 在34天后删除, 按天建的索引, 2天后删除
   .*-(?=\d{4}\.\d{2}$):
