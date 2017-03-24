@@ -182,7 +182,9 @@ def delete_indices(indices, settings):
     with lock:
         logger.debug(u"try to delete %s" % ",".join(indices))
         for index in indices:
-            r = requests.delete(index, timeout=300, params={"master_timeout":"300s"})
+            r = requests.delete(
+                index, timeout=300, params={
+                    "master_timeout": "300s"})
             if r.ok:
                 logger.info(u"%s deleted" % index)
                 dopey_summary.add(u"%s 己删除" % index)
@@ -222,15 +224,14 @@ def close_indices(indices, settings):
                 dopey_summary.add(u"%s 关闭失败" % index)
 
 
-def optimize_index(esclient, index, settings):
+def optimize_index(index, settings):
     dopey_summary.add(u"%s optimize 开始" % index)
     try:
-        if curator.optimize_index(
-                esclient,
-                index,
-                max_num_segments=settings.get("max_num_segments", 1),
-                request_timeout=5 *
-                3600):
+        url = u"{}/{}/_frocemerge".format(config["eshost"], index)
+        logging.info(u"optimize {} by {}".format(index, url))
+
+        r = requests.post(url, params={"max_num_segments": 1}, timeout=5 * 3600)
+        if r.ok:
             logger.info("%s optimized" % index)
             dopey_summary.add(u"%s optimize 完成" % index)
         else:
