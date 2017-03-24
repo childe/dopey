@@ -262,28 +262,6 @@ def optimize_indices(indices, settings):
         optimize_index(index, settings)
 
 
-def open_replic(esclient, indices, settings):
-    """
-    :type esclient: elasticsearch.Elasticsearch
-    :type indices: list of (indexname,index_settings)
-    :type settings: dict, not used
-    :rtype: None
-    """
-    if not indices:
-        return
-    logger.debug("try to open replic, %s" % ",".join([e[0] for e in indices]))
-    dopey_summary.add(u"%s 打开replic" % ",".join([e[0] for e in indices]))
-    index_client = elasticsearch.client.IndicesClient(esclient)
-    for index, index_settings in indices:
-        replic = index_settings[index]["settings"][
-            "index"]["number_of_replicas"]
-        index_client.put_settings(
-            index=index,
-            body={"index.number_of_replicas": replic},
-            params={"master_timeout": "300s"}
-        )
-
-
 def _compare_index_settings(part, whole):
     """
     return True if part is part of whole
