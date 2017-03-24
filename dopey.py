@@ -149,11 +149,6 @@ def get_indices():
         return False
 
 
-def get_relo_index_cnt(esclient):
-    cnt = elasticsearch.client.CatClient(esclient).health(h="relo")
-    return int(cnt)
-
-
 def update_cluster_settings(settings):
     """
     :type settings: cluster settings
