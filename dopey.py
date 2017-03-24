@@ -225,6 +225,8 @@ def close_indices(indices, settings):
 
 
 def optimize_index(index, settings):
+    global config
+
     dopey_summary.add(u"%s optimize 开始" % index)
     try:
         url = u"{}/{}/_frocemerge".format(config["eshost"], index)
@@ -241,9 +243,8 @@ def optimize_index(index, settings):
         dopey_summary.add(u"%s optimize 未完成退出" % index)
 
 
-def optimize_indices(esclient, indices, settings):
+def optimize_indices(indices, settings):
     """
-    :type esclient: elasticsearch.Elasticsearch
     :type indices: list of (indexname,index_settings)
     :type settings: dict, max_num_segments setting and so on
     :rtype: None
@@ -251,12 +252,14 @@ def optimize_indices(esclient, indices, settings):
     if not indices:
         return []
 
+    global config
+
     indices = [e[0] for e in indices]
     _optimize.extend(indices)
     logger.debug("try to optimize %s" % ",".join(indices))
 
     for index in indices:
-        optimize_index(esclient, index, settings)
+        optimize_index(index, settings)
 
 
 def open_replic(esclient, indices, settings):
