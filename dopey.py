@@ -168,9 +168,8 @@ def update_cluster_settings(settings):
         return False
 
 
-def delete_indices(esclient, indices, settings):
+def delete_indices(indices, settings):
     """
-    :type esclient: elasticsearch.Elasticsearch
     :type indices: list of (indexname,index_settings)
     :type settings: dict, not used
     :rtype: None
@@ -181,14 +180,14 @@ def delete_indices(esclient, indices, settings):
     _delete.extend(indices)
     global lock
     with lock:
-        logger.debug("try to delete %s" % ','.join(indices))
+        logger.debug(u"try to delete %s" % ','.join(indices))
         for index in indices:
-            if curator.delete_indices(esclient, [index], master_timeout='300s'):
-            r = requests.delete(index, timeout=300)
-                logger.info('%s deleted' % index)
+            r = requests.delete(index, timeout=300, params={'master_timeout':'300s'})
+            if r.ok:
+                logger.info(u'%s deleted' % index)
                 dopey_summary.add(u'%s 己删除' % index)
             else:
-                logger.warn('%s deleted failed' % index)
+                logger.warn(u'%s deleted failed' % index)
                 dopey_summary.add(u'%s 删除失败' % index)
 
 
