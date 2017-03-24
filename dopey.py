@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import yaml
-import elasticsearch
+import requests
 
 import json
 import re
@@ -147,6 +147,15 @@ def get_indices():
         return all_indices
     except:
         return False
+
+def get_index_settings(indexname):
+    global config
+    url = u"{}/{}/_settings".format(config['eshost'], indexname)
+    try:
+        return requests.get(url).json()[indexname]['settings']
+    except Exception as e:
+        logging.error(u"could not get {} settings: {}".format(index, str(e)))
+        return None
 
 
 def update_cluster_settings(settings):
@@ -316,8 +325,7 @@ def update_settings(indices, settings):
                 url = u"{}/{}/_settings".format(config["eshost"], index)
                 logging.info(u"get {} settinsg by".format(index, url))
 
-                origin_index_settings = requests.get(
-                    url).json()[index]['settings']
+                origin_index_settings = get_index_settings(index)
 
                 if_same = _compare_index_settings(
                     settings.get("settings"), origin_index_settings)
@@ -347,20 +355,17 @@ def update_settings(indices, settings):
 
 
 def process(
-    esclient,
     all_indices,
     index_prefix,
     index_config,
     base_day,
-     action_filters):
+    action_filters):
     """
-    :type esclient: elasticsearch.Elasticsearch
     :type all_indices: list of str
     :type index_prefix: str
     :type index_config: list of actions
     :rtype: list of indexname
     """
-    index_client = elasticsearch.client.IndicesClient(esclient)
     actions = {}
     rst = []
 
@@ -391,8 +396,7 @@ def process(
                     settings["day"]) or "days" in settings and offset >= datetime.timedelta(
                     settings["days"]):
                 actions.setdefault(action, [])
-                index_settings = index_client.get_settings(
-                    index=indexname)
+                index_settings = get_index_settings(ndexname)
                 actions[action].append((indexname, index_settings))
 
     # TODO 如果一个索引需要删除, 别的action里面可以直接去掉
@@ -405,7 +409,7 @@ def process(
             continue
         logger.debug([e[0] for e in actions.get(action, [])])
         try:
-            eval(action)(esclient, actions.get(action), settings)
+            eval(action)(actions.get(action), settings)
         except Exception as e:
             logging.warn("%s action failed: %s" % (action, e))
 
@@ -485,7 +489,6 @@ def main():
         t = Thread(
             target=process,
             args=(
-                esclient,
                 all_indices,
                 index_prefix,
                 index_config,
@@ -509,7 +512,7 @@ def main():
 
     for action in config.get("teardown", []):
         settings = action.values()[0]
-        eval(action.keys()[0])(esclient, settings)
+        eval(action.keys()[0])(settings)
 
     sumary_config = config.get("sumary")
     for action, kargs in sumary_config.items():
