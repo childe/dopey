@@ -396,7 +396,7 @@ def process(
                     settings["day"]) or "days" in settings and offset >= datetime.timedelta(
                     settings["days"]):
                 actions.setdefault(action, [])
-                index_settings = get_index_settings(ndexname)
+                index_settings = get_index_settings(indexname)
                 actions[action].append((indexname, index_settings))
 
     # TODO 如果一个索引需要删除, 别的action里面可以直接去掉
