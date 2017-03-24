@@ -7,6 +7,8 @@ sumary:
       mail_host: "mail.corp.com"
       from_who: "jia.liu@corp.com"
       to_list: ["jia.liu@corp.com"]
+      login_user: 'admin'
+      login_password: '123456'
 
 setup:
     - update_cluster_settings:

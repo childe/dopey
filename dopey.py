@@ -105,7 +105,14 @@ class Sumary(object):
     def log(self):
         logging.getLogger("DopeySumary").info(self.sumary)
 
-    def mail(self, mail_host, from_who, to_list, sub="dopey summary"):
+    def mail(
+        self,
+        mail_host=None,
+        from_who=None,
+        to_list=None,
+        login_user=None,
+        login_password=None,
+      sub="dopey summary"):
         content = self.sumary
         content = content.encode("utf-8")
 
@@ -116,6 +123,8 @@ class Sumary(object):
         try:
             s = smtplib.SMTP()
             s.connect(mail_host)
+            if login_user is not None:
+                s.login(login_user, login_password)
             s.sendmail(from_who, to_list, msg.as_string())
             s.close()
         except Exception as e:
@@ -147,6 +156,7 @@ def get_indices():
         return all_indices
     except:
         return False
+
 
 def get_index_settings(indexname):
     global config
@@ -362,11 +372,11 @@ def update_settings(indices, settings):
 
 
 def process(
-    all_indices,
-    index_prefix,
-    index_config,
-    base_day,
-    action_filters):
+        all_indices,
+        index_prefix,
+        index_config,
+        base_day,
+        action_filters):
     """
     :type all_indices: list of str
     :type index_prefix: str
