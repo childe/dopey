@@ -185,14 +185,21 @@ def delete_indices(indices, settings):
     """
     if not indices:
         return
+
+    global config
+
     indices = [e[0] for e in indices]
     _delete.extend(indices)
+
     global lock
     with lock:
         logger.debug(u"try to delete %s" % ",".join(indices))
         for index in indices:
+            url = u"{}/{}".format(config['eshost'], index)
+            logging.info(u"delete {} by {}".format(index, url))
+
             r = requests.delete(
-                index, timeout=300, params={
+                url, timeout=300, params={
                     "master_timeout": "300s"})
             if r.ok:
                 logger.info(u"%s deleted" % index)
