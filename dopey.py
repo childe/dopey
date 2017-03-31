@@ -364,7 +364,9 @@ def update_settings(indices, settings):
                 if r.ok:
                     logging.info(u"finished to update settings for %s" % index)
                 else:
-                    logging.info(u"failed to update settings for %s" % index)
+                    logging.info(
+                        u"failed to update settings for %s: %s".format(
+                            index, r.text))
             except Exception as e:
                 logging.info(
                     u"failed to update settings for {}: {}".format(
