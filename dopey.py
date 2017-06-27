@@ -164,7 +164,7 @@ def get_index_settings(indexname):
     try:
         return requests.get(url).json()[indexname]['settings']
     except Exception as e:
-        logging.error(u"could not get {} settings: {}".format(index, str(e)))
+        logging.error(u"could not get {} settings: {}".format(indexname, str(e)))
         return None
 
 
