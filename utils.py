@@ -138,13 +138,14 @@ def delete_indices(config, indices, batch=50):
     while indices:
         to_delete_indices = indices[:batch]
         to_delete_indices_joined = ','.join(to_delete_indices)
-        url = u"{}/{}?ignore_unavailable=true".format(
+        url = u"{}/{}".format(
             config['eshost'], to_delete_indices_joined)
         logging.info(u"delete: {}".format(url))
 
         r = requests.delete(
-            url, timeout=300, params={
-                "master_timeout": "10m"})
+            url, timeout=300,
+            params={"master_timeout": "10m", "ignore_unavailable": True}
+        )
         if r.ok:
             logging.info(u"%s deleted" % to_delete_indices_joined)
         else:
@@ -169,11 +170,16 @@ def close_indices(config, indices, batch=50):
         to_close_indices_joined = ','.join(to_close_indices)
         logging.debug(u"try to close %s" % ",".join(indices))
         for index in indices:
-            url = u"{}/{}/_close?ignore_unavailable=true".format(
+            url = u"{}/{}/_close".format(
                 config['eshost'], to_close_indices_joined)
             logging.info(u"close: {}".format(url))
 
-            r = requests.post(url)
+            r = requests.post(
+                url,
+                timeout=300,
+                params={
+                    "master_timeout": "10m",
+                    "ignore_unavailable": True})
 
             if r.ok:
                 logging.info(u"%s closed" % to_close_indices_joined)
@@ -234,11 +240,17 @@ def update_settings_same_settings(
         to_update_indices = indices[:batch]
         to_update_indices_joined = ','.join(to_update_indices)
 
-        url = u"{}/{}/_settings?ignore_unavailable=true".format(
+        url = u"{}/{}/_settings".format(
             config["eshost"], to_update_indices_joined)
         logging.debug(u"update settings: %s", url)
 
-        r = requests.put(url, data=json.dumps(dopey_index_settings))
+        r = requests.put(
+            url,
+            timeout=300,
+            params={
+                "master_timeout": "10m",
+                "ignore_unavailable": True},
+            data=json.dumps(dopey_index_settings))
 
         if r.ok:
             logging.info(u"%s updated" % to_update_indices_joined)
