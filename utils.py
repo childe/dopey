@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import requests
+
+import datetime
 import logging
+import re
 
 
 def _compare_index_settings(part, whole):
@@ -59,7 +63,55 @@ def get_index_settings(config, indexname):
         logging.error(
             u"could not get {} settings: {}".format(
                 indexname, str(e)))
-        return None
+        return {}
+
+
+def get_to_process_indices(to_select_action, config, all_indices, base_day):
+    """
+    rtype: [(indexname, index_settings, dopey_index_settings)]
+    """
+    rst = []
+
+    for index_prefix, index_config in config['indices'].items():
+        for indexname in all_indices:
+            r = re.findall(
+                r"^%s(\d{4}\.\d{2}\.\d{2})$" % index_prefix,
+                indexname)
+            if r:
+                date = datetime.datetime.strptime(r[0], "%Y.%m.%d")
+            else:
+                r = re.findall(
+                    r"^%s(\d{4}\.\d{2})$" % index_prefix,
+                    indexname)
+                if r:
+                    date = datetime.datetime.strptime(r[0], "%Y.%m")
+                else:
+                    continue
+
+            for e in index_config:
+                action, configs = e.keys()[0], e.values()[0]
+                if action != to_select_action:
+                    continue
+                offset = base_day-date.date()
+                if "day" in configs and offset == datetime.timedelta(
+                        configs["day"]) or "days" in configs and offset >= datetime.timedelta(
+                        configs["days"]):
+                    index_settings = get_index_settings(config, indexname)
+                    rst.append((indexname, index_settings, configs['settings']))
+
+    return rst
+
+
+def get_to_delete_indices(config, all_indices, base_day):
+    return get_to_process_indices('delete_indices', all_indices, base_day)
+
+
+def get_to_close_indices(config, all_indices, base_day):
+    return get_to_process_indices('close_indices', all_indices, base_day)
+
+
+def get_to_update_indices(config, all_indices, base_day):
+    return get_to_process_indices('update_settings', all_indices, base_day)
 
 
 def delete_indices(config, indices, batch=50):
@@ -104,7 +156,7 @@ def close_indices(config, indices, batch=50):
     while indices:
         to_close_indices = indices[:batch]
         to_close_indices_joined = ','.join(to_close_indices)
-        logger.debug(u"try to close %s" % ",".join(indices))
+        logging.debug(u"try to close %s" % ",".join(indices))
         for index in indices:
             url = u"{}/{}/_close".format(config['eshost'],
                                          to_close_indices_joined)
@@ -113,53 +165,114 @@ def close_indices(config, indices, batch=50):
             r = requests.post(url)
 
             if r.ok:
-                logger.info(u"%s closed" % to_close_indices_joined)
+                logging.info(u"%s closed" % to_close_indices_joined)
                 dopey_summary.add(u"%s 已关闭" % to_close_indices_joined)
             else:
-                logger.warn(u"%s closed failed" % to_close_indices_joined)
+                logging.warn(u"%s closed failed" % to_close_indices_joined)
                 dopey_summary.add(u"%s 关闭失败" % to_close_indices_joined)
         indices = indices[batch:]
 
 
-def get_to_process_indices(to_select_action, config, all_indices, base_day):
+def find_need_to_update_indices(indices):
     """
-    rtype: [(indexname, index_settings, dopey_index_settings)]
+    :type indices: [(indexname,index_settings, dopey_index_settings)]
+    :rtype : [(indexname,index_settings, dopey_index_settings)]
     """
     rst = []
-    index_config = config['indices']
-
-    for indexname in all_indices:
-        r = re.findall(
-            r"^%s(\d{4}\.\d{2}\.\d{2})$" % index_prefix,
-            indexname)
-        if r:
-            date = datetime.datetime.strptime(r[0], "%Y.%m.%d")
+    for index, index_settings, dopey_index_settings in indices:
+        if_same = _compare_index_settings(index_settings, origin_index_settings)
+        if if_same is True:
+            logging.info(u"unchanged settings, skip")
+            continue
         else:
-            r = re.findall(
-                r"^%s(\d{4}\.\d{2})$" % index_prefix,
-                indexname)
-            if r:
-                date = datetime.datetime.strptime(r[0], "%Y.%m")
-            else:
-                continue
-
-        for e in index_config:
-            action, settings = e.keys()[0], e.values()[0]
-            if action != to_select_action:
-                continue
-            offset = base_day-date.date()
-            if "day" in settings and offset == datetime.timedelta(
-                    settings["day"]) or "days" in settings and offset >= datetime.timedelta(
-                    settings["days"]):
-                index_settings = get_index_settings(config, indexname)
-                rst.append((indexname, index_settings, settings))
+            logging.info(
+                u"settings need to be changed. %s" %
+                json.dumps(if_same))
+            rst.append((index, index_settings, dopey_index_settings))
 
     return rst
 
 
-def get_to_delete_indices(config, all_indices, base_day):
-    return get_to_process_indices('delete_indices', all_indices, base_day)
+def arrange_indices_by_settings(indices):
+    """
+    :type indices: [(indexname,index_settings, dopey_index_settings)]
+    :rtype: [(dopey_index_settings,[indexname])]
+    """
+    rst = []
+    for index, index_settings, dopey_index_settings in indices:
+        for e in rst:
+            if dopey_index_settings == e[0]:
+                rst[1].append(index)
+                break
+        else:
+            rst[dopey_index_settings] = [index]
+
+    return rst
 
 
-def get_to_update_indices(config, all_indices, base_day):
-    return get_to_process_indices('update_settings', all_indices, base_day)
+def update_settings_same_settings(
+        config,
+        indices,
+        dopey_index_settings,
+        batch=50):
+    """
+    :type indices: [indexname]
+    :rtype: None
+    """
+    while indices:
+        to_update_indices = indices[:batch]
+        to_update_indices_joined = ','.join(to_update_indices)
+
+        url = u"{}/{}/_settings".format(config["eshost"],
+                                        to_update_indices_joined)
+        logging.debug(u"update settings: %s", url)
+
+        r = requests.put(url)
+
+        if r.ok:
+            logging.info(u"%s updated" % to_update_indices_joined)
+            dopey_summary.add(u"%s 已更新" % to_update_indices_joined)
+        else:
+            logging.warn(u"%s updated failed" % to_update_indices_joined)
+            dopey_summary.add(u"%s 更新失败" % to_update_indices_joined)
+
+        indices = indices[:batch]
+
+
+def update_settings(config, indices, batch=50):
+    """
+    :type indices: [(indexname,index_settings, dopey_index_settings)]
+    :rtype: None
+    """
+    if not indices:
+        return
+
+    logging.debug(u"try to update index settings %s" %
+                  ','.join([e[0] for e in indices]))
+
+    need_to_update_indices = find_need_to_update_indices(indices)
+    logging.debug(u"need_to_update_indices: %s", need_to_update_indices)
+
+    to_update_indices = arrange_indices_by_settings(need_to_update_indices)
+    logging.debug(u"to_update_indices: %s", to_update_indices)
+
+    for dopey_index_settings, indices in to_update_indices:
+        update_settings_same_settings(
+            config, indices, dopey_index_settings, batch)
+
+
+def optimize_index(config, index):
+
+    logging.info(u"optimize %s" % index)
+    dopey_summary.add(u"%s optimize 开始" % index)
+    url = u"{}/{}/_forcemerge?max_num_segments=1".format(
+        config["eshost"], index)
+    logging.debug(u"forcemerge: %s" % url)
+
+    r = requests.post(url)
+    if r.ok:
+        logging.info(u"%s forcemerged" % index)
+        dopey_summary.add(u"%s merge请求已经发送" % index)
+    else:
+        logging.warn(u"%s forcemerge failed" % index)
+        dopey_summary.add(u"%s merge请求发送失败[%s]" % (index, r.status_code))
