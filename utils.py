@@ -4,6 +4,36 @@
 import logging
 
 
+def _compare_index_settings(part, whole):
+    """
+    return True if part is part of whole
+    type part: dict or else
+    type whole: dict or else
+    rtype: boolean
+    >>> whole={"index":{"routing":{"allocation":{"include":{"group":"4,5"},"total_shards_per_node":"2"}},"refresh_interval":"60s","number_of_shards":"20","store":{"type":"niofs"},"number_of_replicas":"1"}}
+    >>> part={"index":{"routing":{"allocation":{"include":{"group":"4,5"}}}}}
+    >>> _compare_index_settings(part, whole)
+    >>> part={"index":{"routing":{"allocation":{"include":{"group":"5"}}}}}
+    >>> _compare_index_settings(part, whole)
+    False
+    """
+    if part == whole:
+        return True
+    if part is None and whole is None:
+        return True
+    if part is None or whole is None:
+        return (part, whole)
+    if not isinstance(part, type(whole)):
+        return (part, whole)
+    if not isinstance(part, dict):
+        return part == whole
+    for k, v in part.items():
+        r = _compare_index_settings(v, whole.get(k))
+        if r is not True:
+            return r
+    return True
+
+
 def get_indices(config):
     all_indices = []
     eshost = config["eshost"]
