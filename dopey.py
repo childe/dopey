@@ -8,7 +8,6 @@ import json
 import re
 import datetime
 import argparse
-from threading import Thread, Lock
 import smtplib
 from email.mime.text import MIMEText
 import logging.handlers
@@ -80,10 +79,6 @@ def initlog(level=None, log="-"):
         config["handlers"]["file_handler"] = file_handler
         config["root"]["handlers"] = ["file_handler"]
     logging.config.dictConfig(config)
-
-
-logging = None
-lock = Lock()
 
 
 class Sumary(object):

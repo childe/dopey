@@ -105,15 +105,23 @@ def get_to_process_indices(to_select_action, config, all_indices, base_day):
 
 
 def get_to_delete_indices(config, all_indices, base_day):
-    return get_to_process_indices('delete_indices', all_indices, base_day)
+    return get_to_process_indices(
+        'delete_indices', config, all_indices, base_day)
 
 
 def get_to_close_indices(config, all_indices, base_day):
-    return get_to_process_indices('close_indices', all_indices, base_day)
+    return get_to_process_indices(
+        'close_indices', config, all_indices, base_day)
 
 
 def get_to_update_indices(config, all_indices, base_day):
-    return get_to_process_indices('update_settings', all_indices, base_day)
+    return get_to_process_indices(
+        'update_settings', config, all_indices, base_day)
+
+
+def get_to_optimize_indices(config, all_indices, base_day):
+    return get_to_process_indices(
+        'optimize_indices', config, all_indices, base_day)
 
 
 def delete_indices(config, indices, batch=50):
