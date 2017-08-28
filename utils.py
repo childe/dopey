@@ -98,7 +98,8 @@ def get_to_process_indices(to_select_action, config, all_indices, base_day):
                         configs["day"]) or "days" in configs and offset >= datetime.timedelta(
                         configs["days"]):
                     index_settings = get_index_settings(config, indexname)
-                    rst.append((indexname, index_settings, configs['settings']))
+                    rst.append(
+                        (indexname, index_settings, configs.get('settings')))
 
     return rst
 
@@ -137,7 +138,8 @@ def delete_indices(config, indices, batch=50):
     while indices:
         to_delete_indices = indices[:batch]
         to_delete_indices_joined = ','.join(to_delete_indices)
-        url = u"{}/{}".format(config['eshost'], to_delete_indices_joined)
+        url = u"{}/{}?ignore_unavailable=true".format(
+            config['eshost'], to_delete_indices_joined)
         logging.info(u"delete: {}".format(url))
 
         r = requests.delete(
@@ -147,7 +149,9 @@ def delete_indices(config, indices, batch=50):
             logging.info(u"%s deleted" % to_delete_indices_joined)
             # dopey_summary.add(u"%s 己删除" % to_delete_indices_joined)
         else:
-            logging.warn(u"%s deleted failed" % to_delete_indices_joined)
+            logging.warn(
+                u"%s deleted failed. %s" %
+                (to_delete_indices_joined, r.text))
             # dopey_summary.add(u"%s 删除失败" % to_delete_indices_joined)
         indices = indices[batch:]
 
@@ -167,8 +171,8 @@ def close_indices(config, indices, batch=50):
         to_close_indices_joined = ','.join(to_close_indices)
         logging.debug(u"try to close %s" % ",".join(indices))
         for index in indices:
-            url = u"{}/{}/_close".format(config['eshost'],
-                                         to_close_indices_joined)
+            url = u"{}/{}/_close?ignore_unavailable=true".format(
+                config['eshost'], to_close_indices_joined)
             logging.info(u"close: {}".format(url))
 
             r = requests.post(url)
@@ -177,7 +181,9 @@ def close_indices(config, indices, batch=50):
                 logging.info(u"%s closed" % to_close_indices_joined)
                 # dopey_summary.add(u"%s 已关闭" % to_close_indices_joined)
             else:
-                logging.warn(u"%s closed failed" % to_close_indices_joined)
+                logging.warn(
+                    u"%s closed failed. %s" %
+                    (to_close_indices_joined, r.text))
                 # dopey_summary.add(u"%s 关闭失败" % to_close_indices_joined)
         indices = indices[batch:]
 
@@ -189,7 +195,7 @@ def find_need_to_update_indices(indices):
     """
     rst = []
     for index, index_settings, dopey_index_settings in indices:
-        if_same = _compare_index_settings(index_settings, dopey_index_settings)
+        if_same = _compare_index_settings(dopey_index_settings, index_settings)
         if if_same is True:
             logging.info(u"unchanged settings, skip")
             continue
@@ -232,17 +238,19 @@ def update_settings_same_settings(
         to_update_indices = indices[:batch]
         to_update_indices_joined = ','.join(to_update_indices)
 
-        url = u"{}/{}/_settings".format(config["eshost"],
-                                        to_update_indices_joined)
+        url = u"{}/{}/_settings?ignore_unavailable=true".format(
+            config["eshost"], to_update_indices_joined)
         logging.debug(u"update settings: %s", url)
 
-        r = requests.put(url)
+        r = requests.put(url, data=json.dumps(dopey_index_settings))
 
         if r.ok:
             logging.info(u"%s updated" % to_update_indices_joined)
             # dopey_summary.add(u"%s 已更新" % to_update_indices_joined)
         else:
-            logging.warn(u"%s updated failed" % to_update_indices_joined)
+            logging.warn(
+                u"%s updated failed. %s" %
+                (to_update_indices_joined, r.text))
             # dopey_summary.add(u"%s 更新失败" % to_update_indices_joined)
 
         indices = indices[batch:]
@@ -277,7 +285,8 @@ def optimize_indices(config, indices, batch=50):
     """
     while indices:
         to_optimize_indices = indices[:batch]
-        to_optimize_indices_joined = ','.join(to_optimize_indices)
+        to_optimize_indices_joined = ','.join(
+            [e[0] for e in to_optimize_indices])
         url = u"{}/{}/_forcemerge?max_num_segments=1".format(
             config["eshost"], to_optimize_indices_joined)
         logging.debug(u"forcemerge: %s" % url)
@@ -287,7 +296,9 @@ def optimize_indices(config, indices, batch=50):
             logging.info(u"%s forcemerged" % to_optimize_indices_joined)
             # dopey_summary.add(u"%s merge请求已经发送" % to_optimize_indices_joined)
         else:
-            logging.warn(u"%s forcemerge failed" % to_optimize_indices_joined)
+            logging.warn(
+                u"%s forcemerge failed. %s" %
+                (to_optimize_indices_joined, r.text))
             # dopey_summary.add(
             # u"%s merge请求发送失败[%s]" %
             # (to_optimize_indices_joined, r.status_code))

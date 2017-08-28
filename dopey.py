@@ -100,7 +100,7 @@ class Sumary(object):
         print self.sumary.encode("utf-8")
 
     def log(self):
-        logging.getlogging("DopeySumary").info(self.sumary)
+        logging.getLogger("DopeySumary").info(self.sumary)
 
     def mail(
             self,
@@ -309,27 +309,27 @@ def main():
         utils.update_settings(config, to_update_indices, batch=50)
 
     if 'delete_indices' in action_filters:
-        to_delete_indices = get_to_delete_indices(
+        to_delete_indices = utils.get_to_delete_indices(
             config, all_indices, base_day)
         utils.delete_indices(config, to_delete_indices, batch=50)
 
     if 'close_indices' in action_filters:
-        to_close_indices = get_to_close_indices(
+        to_close_indices = utils.get_to_close_indices(
             config, all_indices, base_day)
         utils.close_indices(config, to_close_indices, batch=50)
 
     if 'optimize_indices' in action_filters:
-        to_optimize_indices = get_to_optimize_indices(
+        to_optimize_indices = utils.get_to_optimize_indices(
             config, all_indices, base_day)
         utils.optimize_indices(config, to_optimize_indices, batch=50)
 
-    dopey_summary.add(
-        u"未处理:\n{}\n删除:\n{}\n关闭:\n{}\n优化:{}\n更新索配置:{}".format(
-            "\n".join(sorted(not_dealt)),
-            "\n".join(sorted(_delete)),
-            "\n".join(sorted(_close)),
-            "\n".join(sorted(_optimize)),
-            "\n".join(sorted(_update_settings))))
+    # dopey_summary.add(
+        # u"未处理:\n{}\n删除:\n{}\n关闭:\n{}\n优化:{}\n更新索配置:{}".format(
+        # "\n".join(sorted(not_dealt)),
+        # "\n".join(sorted(_delete)),
+        # "\n".join(sorted(_close)),
+        # "\n".join(sorted(_optimize)),
+        # "\n".join(sorted(_update_settings))))
 
     for action in config.get("teardown", []):
         settings = action.values()[0]
