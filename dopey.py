@@ -15,6 +15,8 @@ import logging.handlers
 import logging
 import logging.config
 
+import utils
+
 config = {}
 
 
@@ -138,36 +140,6 @@ _close = []
 _optimize = []
 _dealt = []
 _update_settings = []
-
-
-def get_indices():
-    global config
-    all_indices = []
-    eshost = config["eshost"]
-    url = "{}/_cat/indices?h=i".format(eshost)
-    logging.debug(u"get all indices from {}".format(url))
-    try:
-        r = requests.get(url)
-        for i in r.text.split():
-            i = i.strip()
-            if i == "":
-                continue
-            all_indices.append(i)
-        return all_indices
-    except BaseException:
-        return False
-
-
-def get_index_settings(indexname):
-    global config
-    url = u"{}/{}/_settings".format(config['eshost'], indexname)
-    try:
-        return requests.get(url).json()[indexname]['settings']
-    except Exception as e:
-        logging.error(
-            u"could not get {} settings: {}".format(
-                indexname, str(e)))
-        return None
 
 
 def update_cluster_settings(settings):
@@ -344,7 +316,7 @@ def update_settings(indices, settings):
                 url = u"{}/{}/_settings".format(config["eshost"], index)
                 logging.info(u"get {} settinsg by".format(index, url))
 
-                origin_index_settings = get_index_settings(index)
+                origin_index_settings = get_index_settings(config, index)
 
                 if_same = _compare_index_settings(
                     settings.get("settings"), origin_index_settings)
@@ -417,7 +389,7 @@ def process(
                     settings["day"]) or "days" in settings and offset >= datetime.timedelta(
                     settings["days"]):
                 actions.setdefault(action, [])
-                index_settings = get_index_settings(indexname)
+                index_settings = get_index_settings(config, indexname)
                 actions[action].append((indexname, index_settings))
 
     # TODO 如果一个索引需要删除, 别的action里面可以直接去掉
@@ -483,6 +455,9 @@ def pre_process_index_config(index_config):
 
 def main():
     global logger
+
+    today = datetime.date.today()
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", default="dopey.yaml", help="yaml config file")
     parser.add_argument(
@@ -507,7 +482,7 @@ def main():
         if "log" in config else args.l)
     logger = logging.getLogger("dopey")
 
-    all_indices = get_indices()
+    all_indices = get_indices(config)
     logger.debug(u"all_indices: {}".format(all_indices))
     if all_indices is False:
         raise Exception("could not get indices")
@@ -519,6 +494,14 @@ def main():
     base_day = _get_base_day(args.base_day)
     logging.info("base day is %s" % base_day)
     action_filters = _get_action_filters(args.action_filters)
+
+    to_update_indices = get_to_update_indices(
+        config, all_indices, base_day)
+    logging.info(u"to_update_indices: %s".format(' '.join(to_update_indices)))
+
+    to_delete_indices = get_to_delete_indices(
+        config, all_indices, base_day)
+    logging.info(u"to_delete_indices: %s".format(' '.join(to_delete_indices)))
 
     process_threads = []
     for index_prefix, index_config in config.get("indices").items():
