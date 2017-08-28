@@ -106,13 +106,13 @@ class Sumary(object):
         logging.getLogger("DopeySumary").info(self.sumary)
 
     def mail(
-        self,
-        mail_host=None,
-        from_who=None,
-        to_list=None,
-        login_user=None,
-        login_password=None,
-      sub="dopey summary"):
+            self,
+            mail_host=None,
+            from_who=None,
+            to_list=None,
+            login_user=None,
+            login_password=None,
+            sub="dopey summary"):
         content = self.sumary
         content = content.encode("utf-8")
 
@@ -154,7 +154,7 @@ def get_indices():
                 continue
             all_indices.append(i)
         return all_indices
-    except:
+    except BaseException:
         return False
 
 
@@ -164,7 +164,9 @@ def get_index_settings(indexname):
     try:
         return requests.get(url).json()[indexname]['settings']
     except Exception as e:
-        logging.error(u"could not get {} settings: {}".format(indexname, str(e)))
+        logging.error(
+            u"could not get {} settings: {}".format(
+                indexname, str(e)))
         return None
 
 
@@ -264,7 +266,7 @@ def optimize_index(index, settings):
             dopey_summary.add(u"%s optimize 完成" % index)
         else:
             raise
-    except:
+    except BaseException:
         logger.info(u"%s optimize 未完成退出" % index)
         dopey_summary.add(u"%s optimize 未完成退出" % index)
 
@@ -439,7 +441,7 @@ def process(
 def _get_base_day(base_day):
     try:
         int(base_day)
-    except:
+    except BaseException:
         return datetime.datetime.strptime(base_day, r"%Y-%m-%d").date()
     else:
         return (
@@ -460,8 +462,23 @@ def _get_action_filters(action_filters_arg):
     try:
         return [action_filters_mapping[k]
                 for k in action_filters_arg.split(",")]
-    except:
+    except BaseException:
         raise Exception("unrecognizable action filters")
+
+
+def pre_process_index_config(index_config):
+    """
+    type index_config: list[{}]
+    """
+    action_weight = {
+        "update_settings": 0,
+        "delete_indices": 1,
+        "close_indices": 2,
+        "close_indices": 3,
+        "optimize_indices": 4,
+    }
+    index_config.sort(key=lambda x: action_weight[x.keys()[0]])
+    return index_config
 
 
 def main():
@@ -474,7 +491,7 @@ def main():
     parser.add_argument(
         "--action-filters",
         default="",
-     help="comma splited. d:delete, c:close, u:update settings, f:forcemerge. leaving blank means do all the actions configuared in config file")
+        help="comma splited. d:delete, c:close, u:update settings, f:forcemerge. leaving blank means do all the actions configuared in config file")
     parser.add_argument(
         "-l",
         default="-",
@@ -505,6 +522,7 @@ def main():
 
     process_threads = []
     for index_prefix, index_config in config.get("indices").items():
+        index_config = pre_process_index_config(index_config)
         t = Thread(
             target=process,
             args=(
@@ -539,6 +557,7 @@ def main():
             getattr(dopey_summary, action)(**kargs)
         else:
             getattr(dopey_summary, action)()
+
 
 if __name__ == "__main__":
     main()
