@@ -197,12 +197,12 @@ def find_need_to_update_indices(indices):
     for index, index_settings, dopey_index_settings in indices:
         if_same = _compare_index_settings(dopey_index_settings, index_settings)
         if if_same is True:
-            logging.info(u"unchanged settings, skip")
+            logging.info(u"%s settings is unchanged , skip" % index)
             continue
         else:
             logging.info(
-                u"settings need to be changed. %s" %
-                json.dumps(if_same))
+                u"%s settings need to be updated. %s" % (index,
+                                                         json.dumps(if_same)))
             rst.append((index, index_settings, dopey_index_settings))
 
     return rst
