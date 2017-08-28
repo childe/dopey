@@ -161,69 +161,6 @@ def update_cluster_settings(settings):
         return False
 
 
-def optimize_index(index, settings):
-    global config
-
-    dopey_summary.add(u"%s optimize 开始" % index)
-    try:
-        url = u"{}/{}/_forcemerge".format(config["eshost"], index)
-
-
-def update_settings(indices, settings):
-    """
-    :type indices: list of (indexname,index_settings)
-    :type settings: dict, index settings to be updated
-    :rtype: None
-    """
-    if not indices:
-        return
-
-    global config
-
-    _update_settings.extend([e[0] for e in indices])
-
-    global lock
-    with lock:
-        logger.info(u"try to update index settings %s" %
-                    ",".join([e[0] for e in indices]))
-        dopey_summary.add(u"%s 更新索引配置" % ",".join([e[0] for e in indices]))
-
-        for index, index_settings in indices:
-            try:
-                url = u"{}/{}/_settings".format(config["eshost"], index)
-                logging.info(u"get {} settinsg by".format(index, url))
-
-                origin_index_settings = get_index_settings(config, index)
-
-                if_same = _compare_index_settings(
-                    settings.get("settings"), origin_index_settings)
-                if if_same is True:
-                    logging.info(u"unchanged settings, skip")
-                    continue
-                else:
-                    logging.info(
-                        u"settings need to be changed. %s" %
-                        json.dumps(if_same))
-
-                logging.info(u"try to update settings for %s" % index)
-
-                r = requests.put(
-                    url, data=json.dumps(
-                        settings.get(
-                            "settings", {})), params={
-                        "master_timeout": "300s"})
-                if r.ok:
-                    logging.info(u"finished to update settings for %s" % index)
-                else:
-                    logging.info(
-                        u"failed to update settings for %s: %s".format(
-                            index, r.text))
-            except Exception as e:
-                logging.info(
-                    u"failed to update settings for {}: {}".format(
-                        index, str(e)))
-
-
 def process(
         all_indices,
         index_prefix,
@@ -360,9 +297,9 @@ def main():
     logger = logging.getLogger("dopey")
 
     all_indices = get_indices(config)
-    logger.debug(u"all_indices: {}".format(all_indices))
     if all_indices is False:
         raise Exception("could not get indices")
+    logger.debug(u"all_indices: {}".format(all_indices))
 
     for action in config.get("setup", []):
         settings = action.values()[0]
@@ -375,30 +312,12 @@ def main():
     to_update_indices = get_to_update_indices(
         config, all_indices, base_day)
     logging.info(u"to_update_indices: %s".format(' '.join(to_update_indices)))
+    update_settings(config, indices, batch=50)
 
     to_delete_indices = get_to_delete_indices(
         config, all_indices, base_day)
     logging.info(u"to_delete_indices: %s".format(' '.join(to_delete_indices)))
 
-    process_threads = []
-    for index_prefix, index_config in config.get("indices").items():
-        index_config = pre_process_index_config(index_config)
-        t = Thread(
-            target=process,
-            args=(
-                all_indices,
-                index_prefix,
-                index_config,
-                base_day,
-                action_filters,
-            ))
-        t.start()
-        process_threads.append(t)
-
-    for t in process_threads:
-        t.join()
-
-    not_dealt = list(set(all_indices).difference(_dealt))
     dopey_summary.add(
         u"未处理:\n{}\n删除:\n{}\n关闭:\n{}\n优化:{}\n更新索配置:{}".format(
             "\n".join(sorted(not_dealt)),
@@ -420,4 +339,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logging.error(e)
