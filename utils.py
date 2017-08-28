@@ -217,7 +217,7 @@ def arrange_indices_by_settings(indices):
     for index, index_settings, dopey_index_settings in indices:
         for e in rst:
             if dopey_index_settings == e[0]:
-                rst[1].append(index)
+                e[1].append(index)
                 break
         else:
             rst.append((dopey_index_settings, [index]))
