@@ -6,8 +6,7 @@ import requests
 import datetime
 import logging
 import re
-
-global dopey_summary
+import json
 
 
 def _compare_index_settings(part, whole):
@@ -146,10 +145,10 @@ def delete_indices(config, indices, batch=50):
                 "master_timeout": "10m"})
         if r.ok:
             logging.info(u"%s deleted" % to_delete_indices_joined)
-            dopey_summary.add(u"%s 己删除" % to_delete_indices_joined)
+            # dopey_summary.add(u"%s 己删除" % to_delete_indices_joined)
         else:
             logging.warn(u"%s deleted failed" % to_delete_indices_joined)
-            dopey_summary.add(u"%s 删除失败" % to_delete_indices_joined)
+            # dopey_summary.add(u"%s 删除失败" % to_delete_indices_joined)
         indices = indices[batch:]
 
 
@@ -176,10 +175,10 @@ def close_indices(config, indices, batch=50):
 
             if r.ok:
                 logging.info(u"%s closed" % to_close_indices_joined)
-                dopey_summary.add(u"%s 已关闭" % to_close_indices_joined)
+                # dopey_summary.add(u"%s 已关闭" % to_close_indices_joined)
             else:
                 logging.warn(u"%s closed failed" % to_close_indices_joined)
-                dopey_summary.add(u"%s 关闭失败" % to_close_indices_joined)
+                # dopey_summary.add(u"%s 关闭失败" % to_close_indices_joined)
         indices = indices[batch:]
 
 
@@ -190,7 +189,7 @@ def find_need_to_update_indices(indices):
     """
     rst = []
     for index, index_settings, dopey_index_settings in indices:
-        if_same = _compare_index_settings(index_settings, origin_index_settings)
+        if_same = _compare_index_settings(index_settings, dopey_index_settings)
         if if_same is True:
             logging.info(u"unchanged settings, skip")
             continue
@@ -215,7 +214,7 @@ def arrange_indices_by_settings(indices):
                 rst[1].append(index)
                 break
         else:
-            rst[dopey_index_settings] = [index]
+            rst.append((dopey_index_settings, [index]))
 
     return rst
 
@@ -241,12 +240,12 @@ def update_settings_same_settings(
 
         if r.ok:
             logging.info(u"%s updated" % to_update_indices_joined)
-            dopey_summary.add(u"%s 已更新" % to_update_indices_joined)
+            # dopey_summary.add(u"%s 已更新" % to_update_indices_joined)
         else:
             logging.warn(u"%s updated failed" % to_update_indices_joined)
-            dopey_summary.add(u"%s 更新失败" % to_update_indices_joined)
+            # dopey_summary.add(u"%s 更新失败" % to_update_indices_joined)
 
-        indices = indices[:batch]
+        indices = indices[batch:]
 
 
 def update_settings(config, indices, batch=50):
@@ -286,11 +285,11 @@ def optimize_indices(config, indices, batch=50):
         r = requests.post(url)
         if r.ok:
             logging.info(u"%s forcemerged" % to_optimize_indices_joined)
-            dopey_summary.add(u"%s merge请求已经发送" % to_optimize_indices_joined)
+            # dopey_summary.add(u"%s merge请求已经发送" % to_optimize_indices_joined)
         else:
             logging.warn(u"%s forcemerge failed" % to_optimize_indices_joined)
-            dopey_summary.add(
-                u"%s merge请求发送失败[%s]" %
-                (to_optimize_indices_joined, r.status_code))
+            # dopey_summary.add(
+            # u"%s merge请求发送失败[%s]" %
+            # (to_optimize_indices_joined, r.status_code))
 
-        indices = indices[:batch]
+        indices = indices[batch:]
