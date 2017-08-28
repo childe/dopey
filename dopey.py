@@ -296,7 +296,7 @@ def main():
         if "log" in config else args.l)
     logger = logging.getLogger("dopey")
 
-    all_indices = get_indices(config)
+    all_indices = utils.get_indices(config)
     if all_indices is False:
         raise Exception("could not get indices")
     logger.debug(u"all_indices: {}".format(all_indices))
@@ -310,12 +310,12 @@ def main():
     action_filters = _get_action_filters(args.action_filters)
 
     if 'update_settings' in action_filters:
-        to_update_indices = get_to_update_indices(
+        to_update_indices = utils.get_to_update_indices(
             config, all_indices, base_day)
         logging.info(
             u"to_update_indices: %s".format(
                 ' '.join(to_update_indices)))
-        update_settings(config, indices, batch=50)
+        utils.update_settings(config, indices, batch=50)
 
     if 'delete_indices' in action_filters:
         to_delete_indices = get_to_delete_indices(
@@ -323,7 +323,7 @@ def main():
         logging.info(
             u"to_delete_indices: %s".format(
                 ' '.join(to_delete_indices)))
-        delete_indices(config, indices, batch=50)
+        utils.delete_indices(config, indices, batch=50)
 
     if 'close_indices' in action_filters:
         to_close_indices = get_to_close_indices(
@@ -331,7 +331,7 @@ def main():
         logging.info(
             u"to_close_indices: %s".format(
                 ' '.join(to_close_indices)))
-        close_indices(config, indices, batch=50)
+        utils.close_indices(config, indices, batch=50)
 
     if 'optimize_indices' in action_filters:
         to_optimize_indices = get_to_optimize_indices(
@@ -339,7 +339,7 @@ def main():
         logging.info(
             u"to_optimize_indices: %s".format(
                 ' '.join(to_optimize_indices)))
-        optimize_indices(config, indices, batch=50)
+        utils.optimize_indices(config, indices, batch=50)
 
     dopey_summary.add(
         u"未处理:\n{}\n删除:\n{}\n关闭:\n{}\n优化:{}\n更新索配置:{}".format(
