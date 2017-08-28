@@ -7,6 +7,8 @@ import datetime
 import logging
 import re
 
+global dopey_summary
+
 
 def _compare_index_settings(part, whole):
     """
@@ -261,18 +263,26 @@ def update_settings(config, indices, batch=50):
             config, indices, dopey_index_settings, batch)
 
 
-def optimize_index(config, index):
+def optimize_indices(config, indices, batch=50):
+    """
+    :type indices: [(indexname,index_settings, dopey_index_settings)]
+    :rtype: None
+    """
+    while indices:
+        to_optimize_indices = indices[:batch]
+        to_optimize_indices_joined = ','.join(to_optimize_indices)
+        url = u"{}/{}/_forcemerge?max_num_segments=1".format(
+            config["eshost"], to_optimize_indices_joined)
+        logging.debug(u"forcemerge: %s" % url)
 
-    logging.info(u"optimize %s" % index)
-    dopey_summary.add(u"%s optimize 开始" % index)
-    url = u"{}/{}/_forcemerge?max_num_segments=1".format(
-        config["eshost"], index)
-    logging.debug(u"forcemerge: %s" % url)
+        r = requests.post(url)
+        if r.ok:
+            logging.info(u"%s forcemerged" % to_optimize_indices_joined)
+            dopey_summary.add(u"%s merge请求已经发送" % to_optimize_indices_joined)
+        else:
+            logging.warn(u"%s forcemerge failed" % to_optimize_indices_joined)
+            dopey_summary.add(
+                u"%s merge请求发送失败[%s]" %
+                (to_optimize_indices_joined, r.status_code))
 
-    r = requests.post(url)
-    if r.ok:
-        logging.info(u"%s forcemerged" % index)
-        dopey_summary.add(u"%s merge请求已经发送" % index)
-    else:
-        logging.warn(u"%s forcemerge failed" % index)
-        dopey_summary.add(u"%s merge请求发送失败[%s]" % (index, r.status_code))
+        indices = indices[:batch]
