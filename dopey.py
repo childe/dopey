@@ -39,7 +39,7 @@ def initlog(level=None, log="-"):
 
     config = {
         "version": 1,
-        "disable_existing_loggers": True,
+        "disable_existing_loggings": True,
         "formatters": {
             "custom": {
                 "()": MyFormatter
@@ -82,7 +82,7 @@ def initlog(level=None, log="-"):
     logging.config.dictConfig(config)
 
 
-logger = None
+logging = None
 lock = Lock()
 
 
@@ -105,7 +105,7 @@ class Sumary(object):
         print self.sumary.encode("utf-8")
 
     def log(self):
-        logging.getLogger("DopeySumary").info(self.sumary)
+        logging.getlogging("DopeySumary").info(self.sumary)
 
     def mail(
             self,
@@ -210,11 +210,11 @@ def process(
 
     for e in index_config:
         action, settings = e.keys()[0], e.values()[0]
-        logger.debug(action)
+        logging.debug(action)
         if action not in action_filters:
-            logger.info("skip %s" % action)
+            logging.info("skip %s" % action)
             continue
-        logger.debug([e[0] for e in actions.get(action, [])])
+        logging.debug([e[0] for e in actions.get(action, [])])
         try:
             eval(action)(actions.get(action), settings)
         except Exception as e:
@@ -268,7 +268,7 @@ def pre_process_index_config(index_config):
 
 
 def main():
-    global logger
+    global logging
 
     today = datetime.date.today()
 
@@ -294,12 +294,11 @@ def main():
     initlog(
         level=args.level, log=config["l"]
         if "log" in config else args.l)
-    logger = logging.getLogger("dopey")
 
     all_indices = utils.get_indices(config)
     if all_indices is False:
         raise Exception("could not get indices")
-    logger.debug(u"all_indices: {}".format(all_indices))
+    logging.debug(u"all_indices: {}".format(all_indices))
 
     for action in config.get("setup", []):
         settings = action.values()[0]
