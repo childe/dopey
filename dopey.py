@@ -161,69 +161,6 @@ def update_cluster_settings(settings):
         return False
 
 
-def delete_indices(indices, settings):
-    """
-    :type indices: list of (indexname,index_settings)
-    :type settings: dict, not used
-    :rtype: None
-    """
-    if not indices:
-        return
-
-    global config
-
-    indices = [e[0] for e in indices]
-    _delete.extend(indices)
-
-    global lock
-    with lock:
-        logger.debug(u"try to delete %s" % ",".join(indices))
-        for index in indices:
-            url = u"{}/{}".format(config['eshost'], index)
-            logging.info(u"delete {} by {}".format(index, url))
-
-            r = requests.delete(
-                url, timeout=300, params={
-                    "master_timeout": "300s"})
-            if r.ok:
-                logger.info(u"%s deleted" % index)
-                dopey_summary.add(u"%s 己删除" % index)
-            else:
-                logger.warn(u"%s deleted failed" % index)
-                dopey_summary.add(u"%s 删除失败" % index)
-
-
-def close_indices(indices, settings):
-    """
-    :type indices: list of (indexname,index_settings)
-    :type settings: dict, not used
-    :rtype: None
-    """
-    if not indices:
-        return
-
-    global config
-
-    indices = [e[0] for e in indices]
-    _close.extend(indices)
-
-    global lock
-    with lock:
-        logger.debug(u"try to close %s" % ",".join(indices))
-        for index in indices:
-            url = u"{}/{}/_close".format(config['eshost'], index)
-            logging.info(u"close {} by {}".format(index, url))
-
-            r = requests.post(url)
-
-            if r.ok:
-                logger.info(u"%s closed" % index)
-                dopey_summary.add(u"%s 已关闭" % index)
-            else:
-                logger.warn(u"%s closed failed" % index)
-                dopey_summary.add(u"%s 关闭失败" % index)
-
-
 def optimize_index(index, settings):
     global config
 

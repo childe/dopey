@@ -34,7 +34,7 @@ def get_index_settings(config, indexname):
 
 def delete_indices(config, indices, batch=50):
     """
-    :type indices: list of (indexname,index_settings)
+    :type indices: list of (indexname,index_settings, dopey_index_settings)
     :rtype: None
     """
     if not indices:
@@ -58,6 +58,36 @@ def delete_indices(config, indices, batch=50):
         else:
             logging.warn(u"%s deleted failed" % to_delete_indices_joined)
             dopey_summary.add(u"%s 删除失败" % to_delete_indices_joined)
+        indices = indices[batch:]
+
+
+def close_indices(config, indices, batch=50):
+    """
+    :type indices: list of (indexname,index_settings, dopey_index_settings)
+    :rtype: None
+    """
+    if not indices:
+        return
+
+    indices = [e[0] for e in indices]
+
+    while indices:
+        to_close_indices = indices[:batch]
+        to_close_indices_joined = ','.join(to_close_indices)
+        logger.debug(u"try to close %s" % ",".join(indices))
+        for index in indices:
+            url = u"{}/{}/_close".format(config['eshost'],
+                                         to_close_indices_joined)
+            logging.info(u"close: {}".format(url))
+
+            r = requests.post(url)
+
+            if r.ok:
+                logger.info(u"%s closed" % to_close_indices_joined)
+                dopey_summary.add(u"%s 已关闭" % to_close_indices_joined)
+            else:
+                logger.warn(u"%s closed failed" % to_close_indices_joined)
+                dopey_summary.add(u"%s 关闭失败" % to_close_indices_joined)
         indices = indices[batch:]
 
 
