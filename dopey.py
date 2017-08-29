@@ -306,22 +306,22 @@ def main():
     if 'update_settings' in action_filters:
         to_update_indices = utils.get_to_update_indices(
             config, all_indices, base_day)
-        utils.update_settings(config, to_update_indices, batch=50)
+        utils.update_settings(config, to_update_indices)
 
     if 'delete_indices' in action_filters:
         to_delete_indices = utils.get_to_delete_indices(
             config, all_indices, base_day)
-        utils.delete_indices(config, to_delete_indices, batch=50)
+        utils.delete_indices(config, to_delete_indices)
 
     if 'close_indices' in action_filters:
         to_close_indices = utils.get_to_close_indices(
             config, all_indices, base_day)
-        utils.close_indices(config, to_close_indices, batch=50)
+        utils.close_indices(config, to_close_indices)
 
     if 'optimize_indices' in action_filters:
         to_optimize_indices = utils.get_to_optimize_indices(
             config, all_indices, base_day)
-        utils.optimize_indices(config, to_optimize_indices, batch=50)
+        utils.optimize_indices(config, to_optimize_indices)
 
     # dopey_summary.add(
         # u"未处理:\n{}\n删除:\n{}\n关闭:\n{}\n优化:{}\n更新索配置:{}".format(

@@ -124,7 +124,7 @@ def get_to_optimize_indices(config, all_indices, base_day):
         'optimize_indices', config, all_indices, base_day)
 
 
-def delete_indices(config, indices, batch=50):
+def delete_indices(config, indices):
     """
     :type indices: list of (indexname,index_settings, dopey_index_settings)
     :rtype: None
@@ -132,6 +132,7 @@ def delete_indices(config, indices, batch=50):
     if not indices:
         return
 
+    batch = config.get('batch', 50)
     indices = [e[0] for e in indices]
 
     logging.debug(u"try to delete %s" % ",".join(indices))
@@ -155,7 +156,7 @@ def delete_indices(config, indices, batch=50):
         indices = indices[batch:]
 
 
-def close_indices(config, indices, batch=50):
+def close_indices(config, indices):
     """
     :type indices: list of (indexname,index_settings, dopey_index_settings)
     :rtype: None
@@ -163,6 +164,7 @@ def close_indices(config, indices, batch=50):
     if not indices:
         return
 
+    batch = config.get('batch', 50)
     indices = [e[0] for e in indices]
 
     while indices:
@@ -227,15 +229,12 @@ def arrange_indices_by_settings(indices):
     return rst
 
 
-def update_settings_same_settings(
-        config,
-        indices,
-        dopey_index_settings,
-        batch=50):
+def update_settings_same_settings(config, indices, dopey_index_settings):
     """
     :type indices: [indexname]
     :rtype: None
     """
+    batch = config.get('batch', 50)
     while indices:
         to_update_indices = indices[:batch]
         to_update_indices_joined = ','.join(to_update_indices)
@@ -262,7 +261,7 @@ def update_settings_same_settings(
         indices = indices[batch:]
 
 
-def update_settings(config, indices, batch=50):
+def update_settings(config, indices):
     """
     :type indices: [(indexname,index_settings, dopey_index_settings)]
     :rtype: None
@@ -270,6 +269,7 @@ def update_settings(config, indices, batch=50):
     if not indices:
         return
 
+    batch = config.get('batch', 50)
     logging.debug(u"try to update index settings %s" %
                   ','.join([e[0] for e in indices]))
 
@@ -281,14 +281,15 @@ def update_settings(config, indices, batch=50):
 
     for dopey_index_settings, indices in to_update_indices:
         update_settings_same_settings(
-            config, indices, dopey_index_settings, batch)
+            config, indices, dopey_index_settings)
 
 
-def optimize_indices(config, indices, batch=50):
+def optimize_indices(config, indices):
     """
     :type indices: [(indexname,index_settings, dopey_index_settings)]
     :rtype: None
     """
+    batch = config.get('batch', 50)
     while indices:
         to_optimize_indices = indices[:batch]
         to_optimize_indices_joined = ','.join(

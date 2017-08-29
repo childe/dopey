@@ -1,5 +1,6 @@
 #log: dopey.log
 eshost: http://user:secret@localhost:9200/
+batch: 10
 sumary:
     log: null
     prints: null
