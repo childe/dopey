@@ -1,3 +1,5 @@
+改版了一下,批量处理, 现在快多了~很适合大集群~~
+
 # dopey
 ES索引的维护脚本, 每天close delete reallocate optimize索引
 
