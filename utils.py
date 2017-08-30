@@ -177,30 +177,30 @@ def close_indices(config, indices):
     while indices:
         to_close_indices = indices[:batch]
         to_close_indices_joined = ','.join(to_close_indices)
-        logging.debug(u"try to close %s" % ",".join(indices))
-        for index in indices:
-            url = u"{}/{}/_close".format(
-                config['eshost'], to_close_indices_joined)
-            logging.info(u"close: {}".format(url))
+        logging.debug(u"try to close %s" % to_close_indices_joined)
 
-            for _ in range(retry):
-                try:
-                    r = requests.post(
-                        url,
-                        timeout=300,
-                        params={
-                            "master_timeout": "10m",
-                            "ignore_unavailable": True})
+        url = u"{}/{}/_close".format(
+            config['eshost'], to_close_indices_joined)
+        logging.info(u"close: {}".format(url))
 
-                    if r.ok:
-                        logging.info(u"%s closed" % to_close_indices_joined)
-                        break
-                    else:
-                        logging.warn(
-                            u"%s closed failed. %s" %
-                            (to_close_indices_joined, r.text))
-                except BaseException as e:
-                    logging.info(e)
+        for _ in range(retry):
+            try:
+                r = requests.post(
+                    url,
+                    timeout=300,
+                    params={
+                        "master_timeout": "10m",
+                        "ignore_unavailable": True})
+
+                if r.ok:
+                    logging.info(u"%s closed" % to_close_indices_joined)
+                    break
+                else:
+                    logging.warn(
+                        u"%s closed failed. %s" %
+                        (to_close_indices_joined, r.text))
+            except BaseException as e:
+                logging.info(e)
         indices = indices[batch:]
 
 
