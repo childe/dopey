@@ -132,6 +132,7 @@ def delete_indices(config, indices):
     if not indices:
         return
 
+    retry = config.get('retry', 3)
     batch = config.get('batch', 50)
     indices = [e[0] for e in indices]
 
@@ -143,16 +144,21 @@ def delete_indices(config, indices):
             config['eshost'], to_delete_indices_joined)
         logging.info(u"delete: {}".format(url))
 
-        r = requests.delete(
-            url, timeout=300,
-            params={"master_timeout": "10m", "ignore_unavailable": True}
-        )
-        if r.ok:
-            logging.info(u"%s deleted" % to_delete_indices_joined)
-        else:
-            logging.warn(
-                u"%s deleted failed. %s" %
-                (to_delete_indices_joined, r.text))
+        for _ in range(retry):
+            try:
+                r = requests.delete(
+                    url, timeout=300,
+                    params={"master_timeout": "10m", "ignore_unavailable": True}
+                )
+                if r.ok:
+                    logging.info(u"%s deleted" % to_delete_indices_joined)
+                    break
+                else:
+                    logging.warn(
+                        u"%s deleted failed. %s" %
+                        (to_delete_indices_joined, r.text))
+            except BaseException as e:
+                logging.info(e)
         indices = indices[batch:]
 
 
@@ -164,6 +170,7 @@ def close_indices(config, indices):
     if not indices:
         return
 
+    retry = config.get('retry', 3)
     batch = config.get('batch', 50)
     indices = [e[0] for e in indices]
 
@@ -176,19 +183,24 @@ def close_indices(config, indices):
                 config['eshost'], to_close_indices_joined)
             logging.info(u"close: {}".format(url))
 
-            r = requests.post(
-                url,
-                timeout=300,
-                params={
-                    "master_timeout": "10m",
-                    "ignore_unavailable": True})
+            for _ in range(retry):
+                try:
+                    r = requests.post(
+                        url,
+                        timeout=300,
+                        params={
+                            "master_timeout": "10m",
+                            "ignore_unavailable": True})
 
-            if r.ok:
-                logging.info(u"%s closed" % to_close_indices_joined)
-            else:
-                logging.warn(
-                    u"%s closed failed. %s" %
-                    (to_close_indices_joined, r.text))
+                    if r.ok:
+                        logging.info(u"%s closed" % to_close_indices_joined)
+                        break
+                    else:
+                        logging.warn(
+                            u"%s closed failed. %s" %
+                            (to_close_indices_joined, r.text))
+                except BaseException as e:
+                    logging.info(e)
         indices = indices[batch:]
 
 
@@ -234,6 +246,7 @@ def update_settings_same_settings(config, indices, dopey_index_settings):
     :type indices: [indexname]
     :rtype: None
     """
+    retry = config.get('retry', 3)
     batch = config.get('batch', 50)
     while indices:
         to_update_indices = indices[:batch]
@@ -243,20 +256,25 @@ def update_settings_same_settings(config, indices, dopey_index_settings):
             config["eshost"], to_update_indices_joined)
         logging.debug(u"update settings: %s", url)
 
-        r = requests.put(
-            url,
-            timeout=300,
-            params={
-                "master_timeout": "10m",
-                "ignore_unavailable": True},
-            data=json.dumps(dopey_index_settings))
+        for _ in range(retry):
+            try:
+                r = requests.put(
+                    url,
+                    timeout=300,
+                    params={
+                        "master_timeout": "10m",
+                        "ignore_unavailable": True},
+                    data=json.dumps(dopey_index_settings))
 
-        if r.ok:
-            logging.info(u"%s updated" % to_update_indices_joined)
-        else:
-            logging.warn(
-                u"%s updated failed. %s" %
-                (to_update_indices_joined, r.text))
+                if r.ok:
+                    logging.info(u"%s updated" % to_update_indices_joined)
+                    break
+                else:
+                    logging.warn(
+                        u"%s updated failed. %s" %
+                        (to_update_indices_joined, r.text))
+            except BaseException as e:
+                logging.info(e)
 
         indices = indices[batch:]
 
@@ -289,6 +307,7 @@ def optimize_indices(config, indices):
     :type indices: [(indexname,index_settings, dopey_index_settings)]
     :rtype: None
     """
+    retry = config.get('retry', 3)
     batch = config.get('batch', 50)
     while indices:
         to_optimize_indices = indices[:batch]
@@ -298,12 +317,17 @@ def optimize_indices(config, indices):
             config["eshost"], to_optimize_indices_joined)
         logging.debug(u"forcemerge: %s" % url)
 
-        r = requests.post(url)
-        if r.ok:
-            logging.info(u"%s forcemerged" % to_optimize_indices_joined)
-        else:
-            logging.warn(
-                u"%s forcemerge failed. %s" %
-                (to_optimize_indices_joined, r.text))
+        for _ in range(retry):
+            try:
+                r = requests.post(url)
+                if r.ok:
+                    logging.info(u"%s forcemerged" % to_optimize_indices_joined)
+                    break
+                else:
+                    logging.warn(
+                        u"%s forcemerge failed. %s" %
+                        (to_optimize_indices_joined, r.text))
+            except BaseException as e:
+                logging.info(e)
 
         indices = indices[batch:]
