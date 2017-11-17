@@ -44,16 +44,16 @@ def get_indices(config):
     eshost = config["eshost"]
     url = "{}/_cat/indices?h=i".format(eshost)
     logging.debug(u"get all indices from {}".format(url))
-    try:
-        r = requests.get(url)
-        for i in r.text.split():
-            i = i.strip()
-            if i == "":
-                continue
-            all_indices.append(i)
-        return all_indices
-    except BaseException:
-        return False
+
+    r = requests.get(url)
+    if not r.ok:
+        raise BaseException(u"could get indices from {}:{}".format(url, r.status_code))
+    for i in r.text.split():
+        i = i.strip()
+        if i == "":
+            continue
+        all_indices.append(i)
+    return all_indices
 
 
 def get_index_settings(config, indexname):
@@ -287,7 +287,6 @@ def update_settings(config, indices):
     if not indices:
         return
 
-    batch = config.get('batch', 50)
     logging.debug(u"try to update index settings %s" %
                   ','.join([e[0] for e in indices]))
 
