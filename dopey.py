@@ -198,7 +198,7 @@ def process(
                     settings["day"]) or "days" in settings and offset >= datetime.timedelta(
                     settings["days"]):
                 actions.setdefault(action, [])
-                index_settings = get_index_settings(config, indexname)
+                index_settings = utils.get_index_settings(config, indexname)
                 actions[action].append((indexname, index_settings))
 
     # TODO 如果一个索引需要删除, 别的action里面可以直接去掉
@@ -255,7 +255,6 @@ def pre_process_index_config(index_config):
         "update_settings": 0,
         "delete_indices": 1,
         "close_indices": 2,
-        "close_indices": 3,
         "optimize_indices": 4,
     }
     index_config.sort(key=lambda x: action_weight[x.keys()[0]])
@@ -265,8 +264,6 @@ def pre_process_index_config(index_config):
 def main():
     global logging
 
-    today = datetime.date.today()
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", default="dopey.yaml", help="yaml config file")
     parser.add_argument(
@@ -275,7 +272,8 @@ def main():
     parser.add_argument(
         "--action-filters",
         default="",
-        help="comma splited. d:delete, c:close, u:update settings, f:forcemerge. leaving blank means do all the actions configuared in config file")
+        help="comma splited. d:delete, c:close, u:update settings, f:forcemerge. \
+        leaving blank means do all the actions configuared in config file")
     parser.add_argument(
         "-l",
         default="-",
@@ -291,8 +289,7 @@ def main():
         if "log" in config else args.l)
 
     all_indices = utils.get_indices(config)
-    if all_indices is False:
-        raise Exception("could not get indices")
+
     logging.debug(u"all_indices: {}".format(all_indices))
 
     for action in config.get("setup", []):
