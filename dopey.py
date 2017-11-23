@@ -149,7 +149,7 @@ def update_cluster_settings(settings):
         logging.debug(u"update cluster by {}: {}".format(url, settings))
         r = requests.put(
             url, data=json.dumps(settings), params={
-                "master_timeout": "300s"})
+                "master_timeout": "300s"}, headers={"content-type": "application/json"})
         return r.ok
     except Exception as e:
         logging.error("failed to update cluster settings. %s" % e)

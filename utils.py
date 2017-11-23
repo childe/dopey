@@ -45,7 +45,7 @@ def get_indices(config):
     url = "{}/_cat/indices?h=i".format(eshost)
     logging.debug(u"get all indices from {}".format(url))
 
-    r = requests.get(url)
+    r = requests.get(url, headers={"content-type": "application/json"})
     if not r.ok:
         raise BaseException(u"could get indices from {}:{}".format(url, r.status_code))
     for i in r.text.split():
@@ -59,7 +59,7 @@ def get_indices(config):
 def get_index_settings(config, indexname):
     url = u"{}/{}/_settings".format(config['eshost'], indexname)
     try:
-        return requests.get(url).json()[indexname]['settings']
+        return requests.get(url, headers={"content-type": "application/json"}).json()[indexname]['settings']
     except Exception as e:
         logging.error(
             u"could not get {} settings: {}".format(
@@ -73,21 +73,24 @@ def get_to_process_indices(to_select_action, config, all_indices, base_day):
     """
     rst = []
 
+    patterns = (
+        (r"^%s(\d{4}\.\d{2}\.\d{2})$", "%Y.%m.%d"),
+        (r"^%s(\d{4}\-\d{2}\-\d{2})$", "%Y-%m-%d"),
+        (r"^%s(\d{4}\.\d{2})$", "%Y.%m"),
+        (r"^%s(\d{4}\-\d{2})$", "%Y-%m"),
+    )
+
     for index_prefix, index_config in config['indices'].items():
         for indexname in all_indices:
-            r = re.findall(
-                r"^%s(\d{4}\.\d{2}\.\d{2})$" % index_prefix,
-                indexname)
-            if r:
-                date = datetime.datetime.strptime(r[0], "%Y.%m.%d")
-            else:
+            for pattern_format, date_format in patterns:
                 r = re.findall(
-                    r"^%s(\d{4}\.\d{2})$" % index_prefix,
+                    pattern_format % index_prefix,
                     indexname)
                 if r:
-                    date = datetime.datetime.strptime(r[0], "%Y.%m")
-                else:
-                    continue
+                    date = datetime.datetime.strptime(r[0], date_format)
+                    break
+            else:  # not match
+                continue
 
             for e in index_config:
                 action, configs = e.keys()[0], e.values()[0]
@@ -147,9 +150,9 @@ def delete_indices(config, indices):
         for _ in range(retry):
             try:
                 r = requests.delete(
-                    url, timeout=300,
-                    params={"master_timeout": "10m", "ignore_unavailable": True}
-                )
+                    url, timeout=300, params={
+                        "master_timeout": "10m", "ignore_unavailable": True}, headers={
+                        "content-type": "application/json"})
                 if r.ok:
                     logging.info(u"%s deleted" % to_delete_indices_joined)
                     break
@@ -190,7 +193,7 @@ def close_indices(config, indices):
                     timeout=300,
                     params={
                         "master_timeout": "10m",
-                        "ignore_unavailable": True})
+                        "ignore_unavailable": True}, headers={"content-type": "application/json"})
 
                 if r.ok:
                     logging.info(u"%s closed" % to_close_indices_joined)
@@ -264,7 +267,7 @@ def update_settings_same_settings(config, indices, dopey_index_settings):
                     params={
                         "master_timeout": "10m",
                         "ignore_unavailable": True},
-                    data=json.dumps(dopey_index_settings))
+                    data=json.dumps(dopey_index_settings), headers={"content-type": "application/json"})
 
                 if r.ok:
                     logging.info(u"%s updated" % to_update_indices_joined)
@@ -318,7 +321,7 @@ def optimize_indices(config, indices):
 
         for _ in range(retry):
             try:
-                r = requests.post(url)
+                r = requests.post(url, headers={"content-type": "application/json"})
                 if r.ok:
                     logging.info(u"%s forcemerged" % to_optimize_indices_joined)
                     break
