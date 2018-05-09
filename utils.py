@@ -309,27 +309,32 @@ def optimize_indices(config, indices):
     :type indices: [(indexname,index_settings, dopey_index_settings)]
     :rtype: None
     """
-    retry = config.get('retry', 3)
+    arranged_indices = arrange_indices_by_settings(indices)
+    logging.debug(u"arranged_indices: %s", arranged_indices)
+
+    retry = config.get('retry', 1)
     batch = config.get('batch', 50)
-    while indices:
-        to_optimize_indices = indices[:batch]
-        to_optimize_indices_joined = ','.join(
-            [e[0] for e in to_optimize_indices])
-        url = u"{}/{}/_forcemerge?max_num_segments=1".format(
-            config["eshost"], to_optimize_indices_joined)
-        logging.debug(u"forcemerge: %s" % url)
 
-        for _ in range(retry):
-            try:
-                r = requests.post(url, headers={"content-type": "application/json"})
-                if r.ok:
-                    logging.info(u"%s forcemerged" % to_optimize_indices_joined)
-                    break
-                else:
-                    logging.warn(
-                        u"%s forcemerge failed. %s" %
-                        (to_optimize_indices_joined, r.text))
-            except BaseException as e:
-                logging.info(e)
+    for dopey_index_settings, indices in arranged_indices:
+        while indices:
+            to_optimize_indices = indices[:batch]
+            to_optimize_indices_joined = ','.join(to_optimize_indices)
+            url = u"{}/{}/_forcemerge".format(
+                config["eshost"], to_optimize_indices_joined)
+            logging.debug(u"forcemerge: %s" % url)
 
-        indices = indices[batch:]
+            for _ in range(retry):
+                try:
+                    r = requests.post(url, headers={"content-type": "application/json"},
+                                      params=dopey_index_settings, timeout=15)
+                    if r.ok:
+                        logging.info(u"%s forcemerged" % to_optimize_indices_joined)
+                        break
+                    else:
+                        logging.warn(
+                            u"%s forcemerge failed. %s" %
+                            (to_optimize_indices_joined, r.text))
+                except BaseException as e:
+                    logging.info(e)
+
+            indices = indices[batch:]
