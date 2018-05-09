@@ -325,8 +325,7 @@ def optimize_indices(config, indices):
 
             for _ in range(retry):
                 try:
-                    r = requests.post(url, headers={"content-type": "application/json"},
-                                      params=dopey_index_settings, timeout=15)
+                    r = requests.post(url, headers={"content-type": "application/json"}, params=dopey_index_settings)
                     if r.ok:
                         logging.info(u"%s forcemerged" % to_optimize_indices_joined)
                         break
