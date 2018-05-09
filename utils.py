@@ -316,6 +316,9 @@ def optimize_indices(config, indices):
     batch = config.get('batch', 50)
 
     for dopey_index_settings, indices in arranged_indices:
+        if not dopey_index_settings:
+            dopey_index_settings = {}
+        dopey_index_settings.setdefault("max_num_segments", 1)
         while indices:
             to_optimize_indices = indices[:batch]
             to_optimize_indices_joined = ','.join(to_optimize_indices)
