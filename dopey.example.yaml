@@ -1,5 +1,5 @@
 #log: dopey.log
-eshost: http://user:secret@localhost:9200/
+eshost: http://user:secret@127.0.0.1:9200
 batch: 10
 sumary:
     log: null
@@ -32,7 +32,29 @@ indices:
         days: 3 # <= 3 days
     - optimize_indices: 
         day: 1
-        max_num_segments: 1 #default 1
+        settings:
+            flush: true
+            max_num_segments: 1
+    - update_settings:
+        day: 1 # == 1 day
+        settings:
+            index:
+                routing:
+                    allocation:
+                        require:
+                            boxtype: "weak"
+                number_of_replicas: "1"
+                refresh_interval: "30s"
+  test2-:
+    - delete_indices: 
+        days: 10 # <=10 days
+    - close_indices: 
+        days: 3 # <= 3 days
+    - optimize_indices: 
+        day: 1
+        settings:
+            flush: true
+            max_num_segments: 2
     - update_settings:
         day: 1 # == 1 day
         settings:
