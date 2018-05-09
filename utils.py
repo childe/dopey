@@ -151,7 +151,7 @@ def delete_indices(config, indices):
             try:
                 r = requests.delete(
                     url, timeout=300, params={
-                        "master_timeout": "10m", "ignore_unavailable": True}, headers={
+                        "master_timeout": "10m", "ignore_unavailable": 'true'}, headers={
                         "content-type": "application/json"})
                 if r.ok:
                     logging.info(u"%s deleted" % to_delete_indices_joined)
@@ -193,7 +193,7 @@ def close_indices(config, indices):
                     timeout=300,
                     params={
                         "master_timeout": "10m",
-                        "ignore_unavailable": True}, headers={"content-type": "application/json"})
+                        "ignore_unavailable": 'true'}, headers={"content-type": "application/json"})
 
                 if r.ok:
                     logging.info(u"%s closed" % to_close_indices_joined)
@@ -266,7 +266,7 @@ def update_settings_same_settings(config, indices, dopey_index_settings):
                     timeout=300,
                     params={
                         "master_timeout": "10m",
-                        "ignore_unavailable": True},
+                        "ignore_unavailable": 'true'},
                     data=json.dumps(dopey_index_settings), headers={"content-type": "application/json"})
 
                 if r.ok:
