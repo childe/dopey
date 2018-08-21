@@ -8,6 +8,10 @@ import json
 
 
 def main():
+    yn = raw_input('this will delete all indices. [y/n]')
+    if yn != 'y':
+        return
+
     url = u'http://127.0.0.1:9200/*'
     print url
     print requests.delete(url, headers={'content-type':'application/json'})
@@ -63,6 +67,14 @@ def main():
         r = requests.put(url, data=json.dumps(settings), headers={'content-type':'application/json'})
         print r.text
 
+        date = today - datetime.timedelta(i)
+        indexname = u'test-{}1200-1'.format(date.strftime("%Y%m%d"))
+        print indexname
+
+        url = u'http://127.0.0.1:9200/{}'.format(indexname)
+        print url
+        r = requests.put(url, data=json.dumps(settings), headers={'content-type':'application/json'})
+        print r.text
 
 if __name__ == '__main__':
     main()
