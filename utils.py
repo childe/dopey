@@ -91,13 +91,6 @@ def get_to_process_indices(to_select_action, config, all_indices, base_day):
     """
     rst = []
 
-    patterns = (
-        (r"^%s(\d{4}\.\d{2}\.\d{2})$", "%Y.%m.%d"),
-        (r"^%s(\d{4}\-\d{2}\-\d{2})$", "%Y-%m-%d"),
-        (r"^%s(\d{4}\.\d{2})$", "%Y.%m"),
-        (r"^%s(\d{4}\-\d{2})$", "%Y-%m"),
-    )
-
     for index_prefix, index_config in config['indices'].items():
         for indexname in all_indices:
             date = pick_date_from_indexname(indexname, index_prefix)
