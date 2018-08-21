@@ -60,13 +60,13 @@ def initlog(level=None, log="-"):
     console = {
         "class": "logging.StreamHandler",
         "level": "DEBUG",
-        "formatter": "custom",
+        "formatter": "verbose",
         "stream": "ext://sys.stdout"
     }
     file_handler = {
         "class": "logging.handlers.RotatingFileHandler",
         "level": "DEBUG",
-        "formatter": "custom",
+        "formatter": "verbose",
         "filename": log,
         "maxBytes": 10*1000**2,  # 10M
         "backupCount": 5,
