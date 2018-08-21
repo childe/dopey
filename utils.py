@@ -67,7 +67,6 @@ def get_index_settings(config, indexname):
         return {}
 
 
-
 def pick_date_from_indexname(indexname, index_prefix):
     patterns = (
         (r"^%s(\d{4}\.\d{2}\.\d{2})$", "%Y.%m.%d"),
@@ -83,6 +82,24 @@ def pick_date_from_indexname(indexname, index_prefix):
             date = datetime.datetime.strptime(r[0], date_format)
             return date
 
+    index_format = index_prefix
+    r = re.findall(u'\(\?P<date>([^)]+)\)', index_format)
+    if len(r) != 1:
+        return
+    date_format = r[0]
+
+    index_format = index_format.replace('%Y', r'\d{4}')
+    index_format = index_format.replace('%y', r'\d{2}')
+    index_format = index_format.replace('%m', r'\d{2}')
+    index_format = index_format.replace('%d', r'\d{2}')
+    index_format = index_format.replace('%H', r'\d{2}')
+    index_format = index_format.replace('%M', r'\d{2}')
+    index_format = index_format.replace('.', r'\.')
+
+    r = re.findall(index_format, indexname)
+    if r:
+        date = datetime.datetime.strptime(r[0], date_format)
+        return date
 
 
 def get_to_process_indices(to_select_action, config, all_indices, base_day):
