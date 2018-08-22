@@ -266,6 +266,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", default="dopey.yaml", help="yaml config file")
+    parser.add_argument("--eshost", default="", help="eshost here will overwrite that in config file")
     parser.add_argument(
         "--base-day", default="0",
         help="number 0(today), 1(tommorow), -1(yestoday), or string line 2011-11-11")
@@ -283,6 +284,8 @@ def main():
 
     global config
     config = yaml.load(open(args.c))
+    if args.eshost:
+        config['eshost'] = args.eshost
 
     initlog(
         level=args.level, log=config["l"]
