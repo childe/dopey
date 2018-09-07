@@ -155,70 +155,6 @@ def update_cluster_settings(settings):
         logging.error("failed to update cluster settings. %s" % e)
         return False
 
-
-def process(
-        all_indices,
-        index_prefix,
-        index_config,
-        base_day,
-        action_filters):
-    """
-    :type all_indices: list of str
-    :type index_prefix: str
-    :type index_config: list of actions
-    :rtype: list of indexname
-    """
-    actions = {}
-    rst = []
-
-    for indexname in all_indices:
-        r = re.findall(
-            r"^%s(\d{4}\.\d{2}\.\d{2})$" % index_prefix,
-            indexname)
-        if r:
-            date = datetime.datetime.strptime(r[0], "%Y.%m.%d")
-            rst.append(indexname)
-        else:
-            r = re.findall(
-                r"^%s(\d{4}\.\d{2})$" % index_prefix,
-                indexname)
-            if r:
-                date = datetime.datetime.strptime(r[0], "%Y.%m")
-                rst.append(indexname)
-            else:
-                continue
-
-        date = date.date()
-        for e in index_config:
-            action, settings = e.keys()[0], e.values()[0]
-            offset = base_day-date
-            if indexname in [e[0] for e in actions.get("delete_indices", [])]:
-                continue
-            if "day" in settings and offset == datetime.timedelta(
-                    settings["day"]) or "days" in settings and offset >= datetime.timedelta(
-                    settings["days"]):
-                actions.setdefault(action, [])
-                index_settings = utils.get_index_settings(config, indexname)
-                actions[action].append((indexname, index_settings))
-
-    # TODO 如果一个索引需要删除, 别的action里面可以直接去掉
-
-    for e in index_config:
-        action, settings = e.keys()[0], e.values()[0]
-        logging.debug(action)
-        if action not in action_filters:
-            logging.info("skip %s" % action)
-            continue
-        logging.debug([e[0] for e in actions.get(action, [])])
-        try:
-            eval(action)(actions.get(action), settings)
-        except Exception as e:
-            logging.warn("%s action failed: %s" % (action, e))
-
-    _dealt.extend(rst)
-    return rst
-
-
 def _get_base_day(base_day):
     try:
         int(base_day)
@@ -303,11 +239,6 @@ def main():
     logging.info("base day is %s" % base_day)
     action_filters = _get_action_filters(args.action_filters)
 
-    if 'update_settings' in action_filters:
-        to_update_indices = utils.get_to_update_indices(
-            config, all_indices, base_day)
-        utils.update_settings(config, to_update_indices)
-
     if 'delete_indices' in action_filters:
         to_delete_indices = utils.get_to_delete_indices(
             config, all_indices, base_day)
@@ -317,6 +248,11 @@ def main():
         to_close_indices = utils.get_to_close_indices(
             config, all_indices, base_day)
         utils.close_indices(config, to_close_indices)
+
+    if 'update_settings' in action_filters:
+        to_update_indices = utils.get_to_update_indices(
+            config, all_indices, base_day)
+        utils.update_settings(config, to_update_indices)
 
     if 'optimize_indices' in action_filters:
         to_optimize_indices = utils.get_to_optimize_indices(

@@ -123,28 +123,28 @@ def get_to_process_indices(to_select_action, config, all_indices, base_day):
                 offset = base_day-date.date()
                 if "day" in configs and offset == datetime.timedelta(configs["day"]):
                     index_settings = get_index_settings(config, indexname)
-                    rst.append(
-                        (indexname, index_settings, configs.get('settings')))
+                    rst.append((indexname, index_settings, configs.get('settings')))
+                    continue
                 if "days" in configs and offset >= datetime.timedelta(configs["days"]):
                     index_settings = get_index_settings(config, indexname)
-                    rst.append(
-                        (indexname, index_settings, configs.get('settings')))
+                    rst.append((indexname, index_settings, configs.get('settings')))
+                    continue
                 if "hour" in configs and offset == datetime.timedelta(hours=configs["hour"]):
                     index_settings = get_index_settings(config, indexname)
-                    rst.append(
-                        (indexname, index_settings, configs.get('settings')))
+                    rst.append((indexname, index_settings, configs.get('settings')))
+                    continue
                 if "hours" in configs and offset >= datetime.timedelta(hours=configs["hours"]):
                     index_settings = get_index_settings(config, indexname)
-                    rst.append(
-                        (indexname, index_settings, configs.get('settings')))
+                    rst.append((indexname, index_settings, configs.get('settings')))
+                    continue
                 if "minute" in configs and offset == datetime.timedelta(minutes=configs["minute"]):
                     index_settings = get_index_settings(config, indexname)
-                    rst.append(
-                        (indexname, index_settings, configs.get('settings')))
+                    rst.append((indexname, index_settings, configs.get('settings')))
+                    continue
                 if "minutes" in configs and offset >= datetime.timedelta(minutes=configs["minutes"]):
                     index_settings = get_index_settings(config, indexname)
-                    rst.append(
-                        (indexname, index_settings, configs.get('settings')))
+                    rst.append((indexname, index_settings, configs.get('settings')))
+                    continue
 
     return rst
 

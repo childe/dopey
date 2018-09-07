@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+'''
+test1-YYYY-MM-dd 15 days
+test1-YYYY.MM.dd 15 days
+test2-YYYY.MM.dd 15 days
+test3-YYYY.MM.dd 15 days
+test-YYYYMMDDHHmm-1 15 hours
+'''
 
 import requests
 
@@ -14,9 +21,9 @@ def main():
 
     url = u'http://127.0.0.1:9200/*'
     print url
-    print requests.delete(url, headers={'content-type':'application/json'})
+    print requests.delete(url, headers={'content-type': 'application/json'})
 
-    today = datetime.date.today()
+    now = datetime.datetime.now()
     settings = {
         "settings": {
             "index": {
@@ -26,55 +33,55 @@ def main():
         }
     }
     for i in range(15):
-        date = today - datetime.timedelta(i)
+        date = now - datetime.timedelta(i)
         indexname = u'test1-{}'.format(date.strftime("%Y.%m.%d"))
         print indexname
 
         # create index
         url = u'http://127.0.0.1:9200/{}'.format(indexname)
         print url
-        r = requests.put(url, data=json.dumps(settings), headers={'content-type':'application/json'})
+        r = requests.put(url, data=json.dumps(settings), headers={'content-type': 'application/json'})
         print r.text
 
         # write 10 docs to index and refresh
         for j in range(10):
             url = u'http://127.0.0.1:9200/{}/logs?refresh=true'.format(indexname)
             print url
-            r = requests.post(url, data=json.dumps({"age":j}), headers={'content-type':'application/json'})
+            r = requests.post(url, data=json.dumps({"age": j}), headers={'content-type': 'application/json'})
             print r.text
-
 
         indexname = u'test1-{}'.format(date.strftime("%Y-%m-%d"))
         print indexname
         url = u'http://127.0.0.1:9200/{}'.format(indexname)
         print url
-        r = requests.put(url, data=json.dumps(settings), headers={'content-type':'application/json'})
+        r = requests.put(url, data=json.dumps(settings), headers={'content-type': 'application/json'})
         print r.text
 
-        date = today - datetime.timedelta(i)
+        date = now - datetime.timedelta(i)
         indexname = u'test2-{}'.format(date.strftime("%Y.%m.%d"))
         print indexname
         url = u'http://127.0.0.1:9200/{}'.format(indexname)
         print url
-        r = requests.put(url, data=json.dumps(settings), headers={'content-type':'application/json'})
+        r = requests.put(url, data=json.dumps(settings), headers={'content-type': 'application/json'})
         print r.text
 
-        date = today - datetime.timedelta(i)
+        date = now - datetime.timedelta(i)
         indexname = u'test3-{}'.format(date.strftime("%Y.%m.%d"))
         print indexname
         url = u'http://127.0.0.1:9200/{}'.format(indexname)
         print url
-        r = requests.put(url, data=json.dumps(settings), headers={'content-type':'application/json'})
+        r = requests.put(url, data=json.dumps(settings), headers={'content-type': 'application/json'})
         print r.text
 
-        date = today - datetime.timedelta(i)
-        indexname = u'test-{}1200-1'.format(date.strftime("%Y%m%d"))
+        date = now - datetime.timedelta(hours=i)
+        indexname = u'test-{}00-1'.format(date.strftime("%Y%m%d%H"))
         print indexname
 
         url = u'http://127.0.0.1:9200/{}'.format(indexname)
         print url
-        r = requests.put(url, data=json.dumps(settings), headers={'content-type':'application/json'})
+        r = requests.put(url, data=json.dumps(settings), headers={'content-type': 'application/json'})
         print r.text
+
 
 if __name__ == '__main__':
     main()
