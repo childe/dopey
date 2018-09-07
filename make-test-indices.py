@@ -72,7 +72,6 @@ def main():
             r = requests.post(url, data=json.dumps({"age": j}), headers={'content-type': 'application/json'})
             print r.text
 
-
         date = now - datetime.timedelta(i)
         indexname = u'test3-{}'.format(date.strftime("%Y.%m.%d"))
         print indexname
@@ -85,6 +84,15 @@ def main():
         indexname = u'test-{}00-1'.format(date.strftime("%Y%m%d%H"))
         print indexname
 
+        url = u'http://127.0.0.1:9200/{}'.format(indexname)
+        print url
+        r = requests.put(url, data=json.dumps(settings), headers={'content-type': 'application/json'})
+        print r.text
+
+    for i in range(50):
+        date = now - datetime.timedelta(days=i)
+        indexname = u'month-{}'.format(date.strftime("%Y.%m"))
+        print indexname
         url = u'http://127.0.0.1:9200/{}'.format(indexname)
         print url
         r = requests.put(url, data=json.dumps(settings), headers={'content-type': 'application/json'})

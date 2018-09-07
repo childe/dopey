@@ -195,6 +195,18 @@ def main():
         assert indexname in all_indices
     logging.info('test3-YYYY.mm.dd passed')
 
+    # month-YYYY.mm
+    # delete
+    for i in range(34, 50):
+        date = now - datetime.timedelta(days=i)
+        indexname = u'month-{}'.format(date.strftime("%Y.%m"))
+        assert indexname not in all_indices
+    for i in range(1):
+        date = now - datetime.timedelta(days=i)
+        indexname = u'month-{}'.format(date.strftime("%Y.%m"))
+        assert indexname in all_indices
+    logging.info('month-YYYY.mm passed')
+
     # test-YYYYMMDDHHmm-1
     # delete
     for i in range(6, 15):
@@ -205,6 +217,7 @@ def main():
         date = now - datetime.timedelta(hours=i)
         indexname = u'test-{}00-1'.format(date.strftime("%Y%m%d%H"))
         assert indexname in all_indices
+    logging.info('test-YYYYMMDDHHmm-1 passed')
 
 
 if __name__ == '__main__':
