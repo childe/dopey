@@ -25,56 +25,7 @@ teardown:
                 routing:
                     rebalance.enable: all
 indices:
-  test1-:
-    - delete_indices: 
-        days: 10 # <=10 days
-    - close_indices: 
-        days: 3 # <= 3 days
-    - optimize_indices: 
-        day: 1
-        settings:
-            flush: 'true'
-            max_num_segments: 1
-    - update_settings:
-        day: 1 # == 1 day
-        settings:
-            index:
-                routing:
-                    allocation:
-                        require:
-                            boxtype: "weak"
-                number_of_replicas: "1"
-                refresh_interval: "30s"
-  test2-:
-    - delete_indices: 
-        days: 10 # <=10 days
-    - close_indices: 
-        days: 3 # <= 3 days
-    - optimize_indices: 
-        day: 1
-        settings:
-            flush: 'true'
-            max_num_segments: 2
-    - update_settings:
-        day: 1 # == 1 day
-        settings:
-            index:
-                routing:
-                    allocation:
-                        require:
-                            boxtype: "weak"
-                number_of_replicas: "1"
-                refresh_interval: "30s"
 
-  #按月建的索引, 在34天后删除, 按天建的索引, 2天后删除
-  .*-(?=\d{4}\.\d{2}$):
-    - delete_indices:
-        days: 34
-
-  .*-(?=\d{4}\.\d{2}\.\d{2}$):
-    - delete_indices:
-        days: 8
-
-  test-(?P<date>%Y%m%d%H%M)-\d:
+  test-(?P<date>%Y%m%d%H)00-\d:
     - delete_indices:
         hours: 6

@@ -351,7 +351,6 @@ def optimize_indices(config, indices):
     :rtype: None
     """
     arranged_indices = arrange_indices_by_settings(indices)
-    logging.debug(u"arranged_indices: %s", arranged_indices)
 
     retry = config.get('retry', 1)
     batch = config.get('batch', 50)
