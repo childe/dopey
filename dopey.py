@@ -227,7 +227,7 @@ def main():
         level=args.level, log=config["l"]
         if "log" in config else args.l)
 
-    all_indices = utils.get_indices(config)
+    all_indices = utils.get_indices(config['eshost'])
 
     logging.debug(u"all_indices: {}".format(all_indices))
 

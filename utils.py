@@ -41,9 +41,8 @@ def _compare_index_settings(part, whole):
     return True
 
 
-def get_indices(config):
+def get_indices(eshost):
     all_indices = []
-    eshost = config["eshost"]
     url = "{}/_cat/indices?h=i".format(eshost)
     logging.debug(u"get all indices from {}".format(url))
 
