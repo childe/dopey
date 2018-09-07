@@ -154,16 +154,14 @@ def update_cluster_settings(settings):
         logging.error("failed to update cluster settings. %s" % e)
         return False
 
+
 def _get_base_day(base_day):
     try:
         int(base_day)
     except BaseException:
-        return datetime.datetime.strptime(base_day, r"%Y-%m-%d").date()
+        return datetime.datetime.strptime(base_day, r"%Y-%m-%d")
     else:
-        return (
-            datetime.datetime.now() +
-            datetime.timedelta(
-                int(base_day))).date()
+        return datetime.datetime.now() + datetime.timedelta(int(base_day))
 
 
 def _get_action_filters(action_filters_arg):
