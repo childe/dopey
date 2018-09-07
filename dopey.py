@@ -146,7 +146,6 @@ def update_cluster_settings(settings):
     logging.info("update cluster settings: %s" % settings)
     try:
         url = u"{}/_cluster/settings".format(config["eshost"])
-        logging.debug(u"update cluster by {}: {}".format(url, settings))
         r = requests.put(
             url, data=json.dumps(settings), params={
                 "master_timeout": "300s"}, headers={"content-type": "application/json"})
