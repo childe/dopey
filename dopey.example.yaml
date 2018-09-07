@@ -33,7 +33,7 @@ indices:
     - optimize_indices: 
         day: 1
         settings:
-            flush: true
+            flush: 'true'
             max_num_segments: 1
     - update_settings:
         day: 1 # == 1 day
@@ -53,7 +53,7 @@ indices:
     - optimize_indices: 
         day: 1
         settings:
-            flush: true
+            flush: 'true'
             max_num_segments: 2
     - update_settings:
         day: 1 # == 1 day
@@ -74,8 +74,6 @@ indices:
     - delete_indices:
         days: 2
 
-  test-(?P<date>%Y%m%d)\d{4}-\d+:
-    - delete_indices: 
-        days: 10 # <=10 days
-    - close_indices: 
-        days: 3 # <= 3 days
+  test-(?P<date>%Y%m%d%H%M)-\d:
+    - delete_indices:
+        hours: 6
