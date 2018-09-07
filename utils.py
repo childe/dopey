@@ -119,9 +119,27 @@ def get_to_process_indices(to_select_action, config, all_indices, base_day):
                 if action != to_select_action:
                     continue
                 offset = base_day-date.date()
-                if "day" in configs and offset == datetime.timedelta(
-                        configs["day"]) or "days" in configs and offset >= datetime.timedelta(
-                        configs["days"]):
+                if "day" in configs and offset == datetime.timedelta(configs["day"]):
+                    index_settings = get_index_settings(config, indexname)
+                    rst.append(
+                        (indexname, index_settings, configs.get('settings')))
+                if "days" in configs and offset >= datetime.timedelta(configs["days"]):
+                    index_settings = get_index_settings(config, indexname)
+                    rst.append(
+                        (indexname, index_settings, configs.get('settings')))
+                if "hour" in configs and offset == datetime.timedelta(hours=configs["hour"]):
+                    index_settings = get_index_settings(config, indexname)
+                    rst.append(
+                        (indexname, index_settings, configs.get('settings')))
+                if "hours" in configs and offset >= datetime.timedelta(hours=configs["hours"]):
+                    index_settings = get_index_settings(config, indexname)
+                    rst.append(
+                        (indexname, index_settings, configs.get('settings')))
+                if "minute" in configs and offset == datetime.timedelta(minutes=configs["minute"]):
+                    index_settings = get_index_settings(config, indexname)
+                    rst.append(
+                        (indexname, index_settings, configs.get('settings')))
+                if "minutes" in configs and offset >= datetime.timedelta(minutes=configs["minutes"]):
                     index_settings = get_index_settings(config, indexname)
                     rst.append(
                         (indexname, index_settings, configs.get('settings')))
