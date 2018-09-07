@@ -70,9 +70,10 @@ indices:
   .*-(?=\d{4}\.\d{2}$):
     - delete_indices:
         days: 34
+
   .*-(?=\d{4}\.\d{2}\.\d{2}$):
     - delete_indices:
-        days: 2
+        days: 8
 
   test-(?P<date>%Y%m%d%H%M)-\d:
     - delete_indices:
