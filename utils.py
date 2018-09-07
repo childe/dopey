@@ -15,9 +15,11 @@ def _compare_index_settings(part, whole):
     type part: dict or else
     type whole: dict or else
     rtype: boolean
-    >>> whole={"index":{"routing":{"allocation":{"include":{"group":"4,5"},"total_shards_per_node":"2"}},"refresh_interval":"60s","number_of_shards":"20","store":{"type":"niofs"},"number_of_replicas":"1"}}
+    >>> whole={"index":{"routing":{"allocation":{"include":{"group":"4,5"},"total_shards_per_node":"2"}},"refresh_interval":"60s","number_of_shards":"20",\
+        "store":{"type":"niofs"},"number_of_replicas":"1"}}
     >>> part={"index":{"routing":{"allocation":{"include":{"group":"4,5"}}}}}
     >>> _compare_index_settings(part, whole)
+    True
     >>> part={"index":{"routing":{"allocation":{"include":{"group":"5"}}}}}
     >>> _compare_index_settings(part, whole)
     False
