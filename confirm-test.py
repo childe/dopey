@@ -200,8 +200,11 @@ def main():
     for i in range(6, 15):
         date = now - datetime.timedelta(hours=i)
         indexname = u'test-{}00-1'.format(date.strftime("%Y%m%d%H"))
-        print indexname
         assert indexname not in all_indices
+    for i in range(6):
+        date = now - datetime.timedelta(hours=i)
+        indexname = u'test-{}00-1'.format(date.strftime("%Y%m%d%H"))
+        assert indexname in all_indices
 
 
 if __name__ == '__main__':
