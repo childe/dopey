@@ -57,8 +57,22 @@ def get_indices(eshost):
     return all_indices
 
 
-def get_index_settings(config, indexname):
-    url = u"{}/{}/_settings".format(config['eshost'], indexname)
+def cache(c):
+    def wrapper(func):
+        def inner(*args):
+            r = c.get(tuple(args))
+            if r:
+                return r
+            r = func(*args)
+            c[tuple(args)] = r
+            return r
+        return inner
+    return wrapper
+
+
+@cache(c={})
+def get_index_settings(eshost, indexname):
+    url = u"{}/{}/_settings".format(eshost, indexname)
     try:
         return requests.get(url, headers={"content-type": "application/json"}).json()[indexname]['settings']
     except Exception as e:
@@ -68,6 +82,7 @@ def get_index_settings(config, indexname):
         return {}
 
 
+@cache(c={})
 def pick_date_from_indexname(indexname, index_prefix):
     patterns = (
         (r"^%s(\d{4}\.\d{2}\.\d{2})$", "%Y.%m.%d"),
@@ -122,28 +137,28 @@ def get_to_process_indices(to_select_action, config, all_indices, base_day):
 
                 offset = base_day-date
                 if "day" in configs and offset.days == configs["day"]:
-                    index_settings = get_index_settings(config, indexname)
+                    index_settings = get_index_settings(config['eshost'], indexname)
                     rst.append((indexname, index_settings, configs.get('settings')))
                     continue
                 if "days" in configs and offset.days >= configs["days"]:
-                    index_settings = get_index_settings(config, indexname)
+                    index_settings = get_index_settings(config['eshost'], indexname)
                     rst.append((indexname, index_settings, configs.get('settings')))
                     continue
 
                 if "hour" in configs and offset.days*24+offset.seconds // 3600 == configs["hour"]:
-                    index_settings = get_index_settings(config, indexname)
+                    index_settings = get_index_settings(config['eshost'], indexname)
                     rst.append((indexname, index_settings, configs.get('settings')))
                     continue
                 if "hours" in configs and offset.days*24+offset.seconds // 3600 >= configs["hours"]:
-                    index_settings = get_index_settings(config, indexname)
+                    index_settings = get_index_settings(config['eshost'], indexname)
                     rst.append((indexname, index_settings, configs.get('settings')))
                     continue
                 if "minute" in configs and offset.days*24*60+offset.seconds // 60 == configs["minute"]:
-                    index_settings = get_index_settings(config, indexname)
+                    index_settings = get_index_settings(config['eshost'], indexname)
                     rst.append((indexname, index_settings, configs.get('settings')))
                     continue
                 if "minutes" in configs and offset.days*24*60+offset.seconds // 60 >= configs["minutes"]:
-                    index_settings = get_index_settings(config, indexname)
+                    index_settings = get_index_settings(config['eshost'], indexname)
                     rst.append((indexname, index_settings, configs.get('settings')))
                     continue
 
