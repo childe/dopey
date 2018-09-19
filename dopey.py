@@ -5,7 +5,6 @@ import yaml
 import requests
 
 import json
-import re
 import datetime
 import argparse
 import smtplib
@@ -19,17 +18,21 @@ import utils
 config = {}
 
 
-def initlog(level=None, log="-"):
+def initlog(level=None, log="-", disable_existing_loggers=True):
     if level is None:
         level = logging.DEBUG if __debug__ else logging.INFO
     if isinstance(level, basestring):
+        if '|' in level:
+            level, d = level.split('|')
+            if 'FALSE'.startswith(d.upper()):
+                disable_existing_loggers = False
         level = getattr(logging, level.upper())
 
     class MyFormatter(logging.Formatter):
 
         def format(self, record):
-            dformatter = "[%(asctime)s] %(levelname)s %(thread)d %(name)s %(pathname)s %(lineno)d - %(message)s"
-            formatter = "[%(asctime)s] %(levelname)s %(thread)d %(name)s %(message)s"
+            dformatter = '[%(asctime)s] %(name)s %(levelname)s %(pathname)s %(lineno)d [%(funcName)s] %(message)s'
+            formatter = '[%(asctime)s] %(levelname)s %(name)s %(message)s'
             if record.levelno <= logging.DEBUG:
                 self._fmt = dformatter
             else:
@@ -38,23 +41,23 @@ def initlog(level=None, log="-"):
 
     config = {
         "version": 1,
-        "disable_existing_loggers": False,
+        "disable_existing_loggers": disable_existing_loggers,
         "formatters": {
             "custom": {
-                "()": MyFormatter
+                '()': MyFormatter
             },
             "simple": {
-                "format": "[%(asctime)s] %(levelname)s %(thread)d %(name)s %(message)s"
+                "format": "%(asctime)s %(name)s %(levelname)s %(message)s"
             },
             "verbose": {
-                "format": "[%(asctime)s] %(levelname)s %(thread)d %(name)s %(pathname)s %(lineno)d - %(message)s"
+                "format": "[%(asctime)s] %(name)s %(levelname)s %(pathname)s %(lineno)d [%(funcName)s] %(message)s"
             }
         },
         "handlers": {
         },
-        "root": {
-            "level": level,
-            "handlers": ["console"]
+        'root': {
+            'level': level,
+            'handlers': ['console']
         }
     }
     console = {
@@ -79,6 +82,7 @@ def initlog(level=None, log="-"):
         config["handlers"]["file_handler"] = file_handler
         config["root"]["handlers"] = ["file_handler"]
     logging.config.dictConfig(config)
+# end initlog
 
 
 class Sumary(object):
@@ -220,9 +224,7 @@ def main():
     if args.eshost:
         config['eshost'] = args.eshost
 
-    initlog(
-        level=args.level, log=config["l"]
-        if "log" in config else args.l)
+    initlog(level=args.level, log=config["l"] if "log" in config else args.l)
 
     all_indices = utils.get_indices(config['eshost'])
 
