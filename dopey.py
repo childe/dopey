@@ -245,19 +245,19 @@ def main():
     if 'close_indices' in action_filters:
         to_close_indices = utils.get_to_close_indices(
             config, all_indices, base_day)
-        logging.info('try to close `{}`'.format(' '.join(e[0] for e in to_delete_indices)))
+        logging.info('try to close `{}`'.format(' '.join(e[0] for e in to_close_indices)))
         utils.close_indices(config, to_close_indices)
 
     if 'update_settings' in action_filters:
         to_update_indices = utils.get_to_update_indices(
             config, all_indices, base_day)
-        logging.info('try to update `{}`'.format(' '.join(e[0] for e in to_delete_indices)))
+        logging.info('try to update `{}`'.format(' '.join(e[0] for e in to_update_indices)))
         utils.update_settings(config, to_update_indices)
 
     if 'optimize_indices' in action_filters:
         to_optimize_indices = utils.get_to_optimize_indices(
             config, all_indices, base_day)
-        logging.info('try to forcemerge `{}`'.format(' '.join(e[0] for e in to_delete_indices)))
+        logging.info('try to forcemerge `{}`'.format(' '.join(e[0] for e in to_optimize_indices)))
         utils.optimize_indices(config, to_optimize_indices)
 
     # dopey_summary.add(
