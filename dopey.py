@@ -38,7 +38,7 @@ def initlog(level=None, log="-"):
 
     config = {
         "version": 1,
-        "disable_existing_loggings": True,
+        "disable_existing_loggers": False,
         "formatters": {
             "custom": {
                 "()": MyFormatter
