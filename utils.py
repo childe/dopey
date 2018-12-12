@@ -48,7 +48,8 @@ def get_indices(eshost):
 
     r = requests.get(url, headers={"content-type": "application/json"})
     if not r.ok:
-        raise BaseException(u"could get indices from {}:{}".format(url, r.status_code))
+        logging.error(r.text)
+        raise BaseException(u"could not get indices from {}:{}".format(url, r.status_code))
     for i in r.text.split():
         i = i.strip()
         if i == "":
