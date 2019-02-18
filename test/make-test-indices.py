@@ -57,6 +57,13 @@ def main():
         r = requests.put(url, data=json.dumps(settings), headers={'content-type': 'application/json'})
         print r.text
 
+        # write 10 docs to index and refresh
+        for j in range(8):
+            url = u'http://127.0.0.1:9200/{}/logs?refresh=true'.format(indexname)
+            print url
+            r = requests.post(url, data=json.dumps({"age": j}), headers={'content-type': 'application/json'})
+            print r.text
+
         date = now - datetime.timedelta(i)
         indexname = u'test2-{}'.format(date.strftime("%Y.%m.%d"))
         print indexname
@@ -88,6 +95,14 @@ def main():
         print url
         r = requests.put(url, data=json.dumps(settings), headers={'content-type': 'application/json'})
         print r.text
+
+        # write 10 docs to index and refresh
+        for j in range(8):
+            url = u'http://127.0.0.1:9200/{}/logs?refresh=true'.format(indexname)
+            print url
+            r = requests.post(url, data=json.dumps({"age": j}), headers={'content-type': 'application/json'})
+            print r.text
+
 
     for i in range(50):
         date = now - datetime.timedelta(days=i)

@@ -29,9 +29,9 @@ indices:
     - delete_indices:
         days: 10 # <=10 days
     - close_indices:
-        days: 5 # <= 5 days
+        days: 7 # <= 7 days
     - freeze_indices:
-        days: 3 # <= 3 days
+        days: 3-6
     - optimize_indices:
         day: 2
         settings:
@@ -51,9 +51,9 @@ indices:
     - delete_indices:
         days: 10 # <=10 days
     - close_indices:
-        days: 5 # <= 5 days
+        days: 7 # <= 7 days
     - freeze_indices:
-        days: 3 # <= 3 days
+        days: 3-6
     - optimize_indices:
         day: 2
         settings:
@@ -70,7 +70,7 @@ indices:
                 number_of_replicas: "1"
                 refresh_interval: "30s"
 
-  #按月建的索引, 在34天后删除, 按天建的索引, 2天后删除
+  #按月建的索引, 在34天后删除, 按天建的索引, 8天后删除
   .*-(?=\d{4}\.\d{2}$):
     - delete_indices:
         days: 34
@@ -82,3 +82,5 @@ indices:
   test-(?P<date>%Y%m%d%H)00-\d:
     - delete_indices:
         hours: 6
+    - freeze_indices:
+        hours: 4

@@ -108,16 +108,21 @@ def main():
         indexname = u'test1-{}'.format(date.strftime("%Y-%m-%d"))
         assert indexname not in all_indices
     # close
-    for i in range(5, 10):
+    for i in range(7, 10):
         date = now - datetime.timedelta(i)
         indexname = u'test1-{}'.format(date.strftime("%Y-%m-%d"))
         assert all_indices[indexname]['status'] == 'close'
     # freeze
-    for i in range(3, 5):
+    for i in range(3, 7):
         date = now - datetime.timedelta(i)
         indexname = u'test1-{}'.format(date.strftime("%Y-%m-%d"))
         assert all_indices[indexname]['sc'] == '0'
-    date = now - datetime.timedelta(1)
+    for i in range(3):
+        date = now - datetime.timedelta(i)
+        indexname = u'test1-{}'.format(date.strftime("%Y-%m-%d"))
+        assert all_indices[indexname]['sc'] != '0'
+
+    # update settings
     date = now - datetime.timedelta(1)
     indexname = u'test1-{}'.format(date.strftime("%Y-%m-%d"))
     url = u'{}/{}/_settings'.format(args.eshost, indexname)
@@ -141,10 +146,11 @@ def main():
         indexname = u'test1-{}'.format(date.strftime("%Y.%m.%d"))
         assert indexname not in all_indices
     # close
-    for i in range(5, 8):
+    for i in range(7, 8):
         date = now - datetime.timedelta(i)
         indexname = u'test1-{}'.format(date.strftime("%Y.%m.%d"))
         assert all_indices[indexname]['status'] == 'close'
+    # update settings
     date = now - datetime.timedelta(1)
     indexname = u'test1-{}'.format(date.strftime("%Y.%m.%d"))
     url = u'{}/{}/_settings'.format(args.eshost, indexname)
@@ -167,15 +173,20 @@ def main():
         indexname = u'test2-{}'.format(date.strftime("%Y.%m.%d"))
         assert indexname not in all_indices
     # close
-    for i in range(5, 8):
+    for i in range(7, 8):
         date = now - datetime.timedelta(i)
         indexname = u'test2-{}'.format(date.strftime("%Y.%m.%d"))
         assert all_indices[indexname]['status'] == 'close'
     # freeze
-    for i in range(3, 5):
+    for i in range(3, 7):
         date = now - datetime.timedelta(i)
-        indexname = u'test1-{}'.format(date.strftime("%Y-%m-%d"))
+        indexname = u'test2-{}'.format(date.strftime("%Y.%m.%d"))
         assert all_indices[indexname]['sc'] == '0'
+    for i in range(3):
+        date = now - datetime.timedelta(i)
+        indexname = u'test2-{}'.format(date.strftime("%Y.%m.%d"))
+        assert all_indices[indexname]['sc'] != '0'
+    # update settings
     date = now - datetime.timedelta(1)
     indexname = u'test2-{}'.format(date.strftime("%Y.%m.%d"))
     url = u'{}/{}/_settings'.format(args.eshost, indexname)
@@ -225,6 +236,14 @@ def main():
         date = now - datetime.timedelta(hours=i)
         indexname = u'test-{}00-1'.format(date.strftime("%Y%m%d%H"))
         assert indexname in all_indices
+    for i in range(4,6):
+        date = now - datetime.timedelta(hours=i)
+        indexname = u'test-{}00-1'.format(date.strftime("%Y%m%d%H"))
+        assert all_indices[indexname]['sc'] == '0'
+    for i in range(4):
+        date = now - datetime.timedelta(hours=i)
+        indexname = u'test-{}00-1'.format(date.strftime("%Y%m%d%H"))
+        assert all_indices[indexname]['sc'] != '0'
     logging.info('test-YYYYMMDDHHmm-1 passed')
 
 

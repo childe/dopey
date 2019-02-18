@@ -141,7 +141,17 @@ def get_to_process_indices(to_select_action, config, all_indices, base_day):
                     index_settings = get_index_settings(config['eshost'], indexname)
                     rst.append((indexname, index_settings, configs.get('settings')))
                     continue
-                if "days" in configs and offset.days >= configs["days"]:
+                if "days" in configs:
+                    days = configs["days"]
+                    if isinstance(days, basestring):
+                        if '-' in days:
+                            from_day, to_day = days.split('-')
+                            if offset.days < int(from_day) or offset.days > int(to_day):
+                                continue
+                        else:
+                            raise BaseException("invalid config {}".format(configs))
+                    elif offset.days < int(days):
+                        continue
                     index_settings = get_index_settings(config['eshost'], indexname)
                     rst.append((indexname, index_settings, configs.get('settings')))
                     continue
@@ -150,7 +160,18 @@ def get_to_process_indices(to_select_action, config, all_indices, base_day):
                     index_settings = get_index_settings(config['eshost'], indexname)
                     rst.append((indexname, index_settings, configs.get('settings')))
                     continue
-                if "hours" in configs and offset.days*24+offset.seconds // 3600 >= configs["hours"]:
+                if "hours" in configs:
+                    hour = offset.days*24 + offset.seconds//3600
+                    hours = configs["hours"]
+                    if isinstance(hours, basestring):
+                        if '-' in hours:
+                            from_hour, to_hour = hours.split('-')
+                            if hour < int(from_hour) or hour > int(to_hour):
+                                continue
+                        else:
+                            raise BaseException("invalid config {}".format(configs))
+                    elif hour < int(hours):
+                        continue
                     index_settings = get_index_settings(config['eshost'], indexname)
                     rst.append((indexname, index_settings, configs.get('settings')))
                     continue
@@ -158,7 +179,18 @@ def get_to_process_indices(to_select_action, config, all_indices, base_day):
                     index_settings = get_index_settings(config['eshost'], indexname)
                     rst.append((indexname, index_settings, configs.get('settings')))
                     continue
-                if "minutes" in configs and offset.days*24*60+offset.seconds // 60 >= configs["minutes"]:
+                if "minutes" in configs:
+                    minute = offset.days*24 + offset.seconds//60
+                    minutes = configs["minutes"]
+                    if isinstance(minutes, basestring) :
+                        if '-' in minutes:
+                            from_minute, to_minute = minutes.split('-')
+                            if minute < int(from_minute) or minute > int(to_minute):
+                                continue
+                        else:
+                            raise BaseException("invalid config {}".format(configs))
+                    elif minute < int(minutes):
+                        continue
                     index_settings = get_index_settings(config['eshost'], indexname)
                     rst.append((indexname, index_settings, configs.get('settings')))
                     continue
@@ -175,9 +207,11 @@ def get_to_close_indices(config, all_indices, base_day):
     return get_to_process_indices(
         'close_indices', config, all_indices, base_day)
 
+
 def get_to_freeze_indices(config, all_indices, base_day):
     return get_to_process_indices(
         'freeze_indices', config, all_indices, base_day)
+
 
 def get_to_update_indices(config, all_indices, base_day):
     return get_to_process_indices(
@@ -268,6 +302,7 @@ def close_indices(config, indices):
                 logging.info(e)
         indices = indices[batch:]
 
+
 def freeze_indices(config, indices):
     """
     :type indices: list of (indexname,index_settings, dopey_index_settings)
@@ -308,6 +343,7 @@ def freeze_indices(config, indices):
             except BaseException as e:
                 logging.info(e)
         indices = indices[batch:]
+
 
 def find_need_to_update_indices(indices):
     """
