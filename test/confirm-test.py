@@ -9,9 +9,6 @@ import argparse
 import logging
 import logging.config
 
-import utils
-
-
 def initlog(level=None, log="-"):
     if level is None:
         level = logging.DEBUG if __debug__ else logging.INFO
@@ -111,10 +108,16 @@ def main():
         indexname = u'test1-{}'.format(date.strftime("%Y-%m-%d"))
         assert indexname not in all_indices
     # close
-    for i in range(3, 10):
+    for i in range(5, 10):
         date = now - datetime.timedelta(i)
         indexname = u'test1-{}'.format(date.strftime("%Y-%m-%d"))
         assert all_indices[indexname]['status'] == 'close'
+    # freeze
+    for i in range(3, 5):
+        date = now - datetime.timedelta(i)
+        indexname = u'test1-{}'.format(date.strftime("%Y-%m-%d"))
+        assert all_indices[indexname]['sc'] == '0'
+    date = now - datetime.timedelta(1)
     date = now - datetime.timedelta(1)
     indexname = u'test1-{}'.format(date.strftime("%Y-%m-%d"))
     url = u'{}/{}/_settings'.format(args.eshost, indexname)
@@ -138,7 +141,7 @@ def main():
         indexname = u'test1-{}'.format(date.strftime("%Y.%m.%d"))
         assert indexname not in all_indices
     # close
-    for i in range(3, 8):
+    for i in range(5, 8):
         date = now - datetime.timedelta(i)
         indexname = u'test1-{}'.format(date.strftime("%Y.%m.%d"))
         assert all_indices[indexname]['status'] == 'close'
@@ -164,10 +167,15 @@ def main():
         indexname = u'test2-{}'.format(date.strftime("%Y.%m.%d"))
         assert indexname not in all_indices
     # close
-    for i in range(3, 8):
+    for i in range(5, 8):
         date = now - datetime.timedelta(i)
         indexname = u'test2-{}'.format(date.strftime("%Y.%m.%d"))
         assert all_indices[indexname]['status'] == 'close'
+    # freeze
+    for i in range(3, 5):
+        date = now - datetime.timedelta(i)
+        indexname = u'test1-{}'.format(date.strftime("%Y-%m-%d"))
+        assert all_indices[indexname]['sc'] == '0'
     date = now - datetime.timedelta(1)
     indexname = u'test2-{}'.format(date.strftime("%Y.%m.%d"))
     url = u'{}/{}/_settings'.format(args.eshost, indexname)
