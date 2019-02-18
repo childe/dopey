@@ -174,6 +174,7 @@ def _get_action_filters(action_filters_arg):
         "d": "delete_indices",
         "u": "update_settings",
         "f": "optimize_indices",
+        "fr": "freeze_indices",
     }
     if action_filters_arg == "":
         return action_filters_mapping.values()
@@ -210,7 +211,7 @@ def main():
     parser.add_argument(
         "--action-filters",
         default="",
-        help="comma splited. d:delete, c:close, u:update settings, f:forcemerge. \
+        help="comma splited. d:delete, c:close, u:update settings, f:forcemerge, fr:freeze. \
         leaving blank means do all the actions configuared in config file")
     parser.add_argument(
         "-l",
@@ -249,6 +250,12 @@ def main():
             config, all_indices, base_day)
         logging.info('try to close `{}`'.format(' '.join(e[0] for e in to_close_indices)))
         utils.close_indices(config, to_close_indices)
+
+    if 'freeze_indices' in action_filters:
+        to_freeze_indices = utils.get_to_freeze_indices(
+            config, all_indices, base_day)
+        logging.info('try to freeze `{}`'.format(' '.join(e[0] for e in to_freeze_indices)))
+        utils.freeze_indices(config, to_freeze_indices)
 
     if 'update_settings' in action_filters:
         to_update_indices = utils.get_to_update_indices(
