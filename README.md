@@ -1,7 +1,7 @@
 改版了一下,批量处理, 现在快多了~很适合大集群~~
 
 # dopey
-ES索引的维护脚本, 每天close delete reallocate optimize索引
+ES索引的维护脚本, 每天close freeze delete reallocate optimize索引
 
 # 依赖
 click==3.3  
@@ -34,4 +34,12 @@ dopey.py --help
   .*-(?=\d{4}\.\d{2}\.\d{2}$):
     - delete_indices:
         days: 2
+```
+
+自定义索引名字中的日期部分:
+
+```
+test-(?P<date>%Y%m%d%H)00-\d:
+- delete_indices:
+    hours: 6
 ```
