@@ -26,11 +26,13 @@ teardown:
                     rebalance.enable: all
 indices:
   test1-:
-    - delete_indices: 
+    - delete_indices:
         days: 10 # <=10 days
-    - close_indices: 
+    - close_indices:
+        days: 5 # <= 5 days
+    - freeze_indices:
         days: 3 # <= 3 days
-    - optimize_indices: 
+    - optimize_indices:
         day: 2
         settings:
             flush: 'true'
@@ -46,11 +48,13 @@ indices:
                 number_of_replicas: "1"
                 refresh_interval: "30s"
   test2-:
-    - delete_indices: 
+    - delete_indices:
         days: 10 # <=10 days
-    - close_indices: 
+    - close_indices:
+        days: 5 # <= 5 days
+    - freeze_indices:
         days: 3 # <= 3 days
-    - optimize_indices: 
+    - optimize_indices:
         day: 2
         settings:
             flush: 'true'

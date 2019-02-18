@@ -175,6 +175,9 @@ def get_to_close_indices(config, all_indices, base_day):
     return get_to_process_indices(
         'close_indices', config, all_indices, base_day)
 
+def get_to_freeze_indices(config, all_indices, base_day):
+    return get_to_process_indices(
+        'freeze_indices', config, all_indices, base_day)
 
 def get_to_update_indices(config, all_indices, base_day):
     return get_to_process_indices(
@@ -265,6 +268,46 @@ def close_indices(config, indices):
                 logging.info(e)
         indices = indices[batch:]
 
+def freeze_indices(config, indices):
+    """
+    :type indices: list of (indexname,index_settings, dopey_index_settings)
+    :rtype: None
+    """
+    if not indices:
+        return
+
+    retry = config.get('retry', 3)
+    batch = config.get('batch', 50)
+    indices = [e[0] for e in indices]
+
+    while indices:
+        to_freeze_indices = indices[:batch]
+        to_freeze_indices_joined = ','.join(to_freeze_indices)
+        logging.debug(u"try to freeze %s" % to_freeze_indices_joined)
+
+        url = u"{}/{}/_freeze".format(
+            config['eshost'], to_freeze_indices_joined)
+        logging.info(u"freeze: {}".format(url))
+
+        for _ in range(retry):
+            try:
+                r = requests.post(
+                    url,
+                    timeout=300,
+                    params={
+                        "master_timeout": "10m",
+                        "ignore_unavailable": 'true'}, headers={"content-type": "application/json"})
+
+                if r.ok:
+                    logging.info(u"%s freezed" % to_freeze_indices_joined)
+                    break
+                else:
+                    logging.warn(
+                        u"%s freezed failed. %s" %
+                        (to_freeze_indices_joined, r.text))
+            except BaseException as e:
+                logging.info(e)
+        indices = indices[batch:]
 
 def find_need_to_update_indices(indices):
     """
