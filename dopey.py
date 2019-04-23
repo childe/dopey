@@ -260,7 +260,7 @@ def main():
     if 'update_settings' in action_filters:
         to_update_indices = utils.get_to_update_indices(
             config, all_indices, base_day)
-        logging.info('try to update `{}`'.format(' '.join(e[0] for e in to_update_indices)))
+        logging.info('(before settings diff filter)try to update `{}`'.format(' '.join(e[0] for e in to_update_indices)))
         utils.update_settings(config, to_update_indices)
 
     if 'optimize_indices' in action_filters:
